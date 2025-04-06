@@ -7,35 +7,61 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// دیتابیس نمادها با شناسه‌های به‌روز
 const SYMBOL_DB = {
+  // ارزهای دیجیتال
   'BTC': {type:'crypto', name:'بیتکوین', source:'coingecko', id:'bitcoin'},
   'ETH': {type:'crypto', name:'اتریوم', source:'coingecko', id:'ethereum'},
   'BNB': {type:'crypto', name:'بایننس کوین', source:'coingecko', id:'binancecoin'},
   'XRP': {type:'crypto', name:'ریپل', source:'coingecko', id:'ripple'},
-  'XAU': {type:'metal', name:'طلا', source:'metals-api', id:'XAU'},
-  'XAG': {type:'metal', name:'نقره', source:'metals-api', id:'XAG'},
-  'EURUSD': {type:'forex', name:'یورو/دلار', source:'frankfurter', id:'EUR/USD'},
-  'GBPUSD': {type:'forex', name:'پوند/دلار', source:'frankfurter', id:'GBP/USD'},
-  'USDJPY': {type:'forex', name:'دلار/ین', source:'frankfurter', id:'USD/JPY'}
+  
+  // فلزات
+  'XAU': {type:'metal', name:'طلا', source:'goldapi', id:'XAU'},
+  'XAG': {type:'metal', name:'نقره', source:'goldapi', id:'XAG'},
+  
+  // جفت ارزهای فارکس
+  'EURUSD': {type:'forex', name:'یورو/دلار', source:'frankfurter', id:'EUR'},
+  'GBPUSD': {type:'forex', name:'پوند/دلار', source:'frankfurter', id:'GBP'},
+  'USDJPY': {type:'forex', name:'دلار/ین', source:'frankfurter', id:'USD'}
 };
 
+// تابع دریافت داده‌های واقعی بازار
 async function getMarketData(symbol) {
+  const symbolInfo = SYMBOL_DB[symbol];
+  if (!symbolInfo) throw new Error('نماد پشتیبانی نمی‌شود');
+
   try {
-    const basePrices = {
-      'BTC': 50000,
-      'ETH': 3000,
-      'XAU': 1800,
-      'EURUSD': 1.08
-    };
+    // دریافت داده ارزهای دیجیتال
+    if (symbolInfo.type === 'crypto') {
+      const response = await axios.get(
+        `https://api.coingecko.com/api/v3/coins/${symbolInfo.id}/market_chart?vs_currency=usd&days=90`
+      );
+      return response.data.prices.map(p => p[1]);
+    }
     
-    const basePrice = basePrices[symbol] || 100;
-    return Array.from({length: 100}, (_, i) => basePrice + Math.sin(i/10) * (basePrice * 0.1));
+    // دریافت داده فلزات
+    if (symbolInfo.type === 'metal') {
+      const response = await axios.get(
+        `https://www.goldapi.io/api/${symbolInfo.id}/USD`,
+        { headers: { 'x-access-token': 'goldapi-abcdef123456-EXAMPLE' } }
+      );
+      return Array(100).fill(response.data.price);
+    }
+    
+    // دریافت داده فارکس
+    if (symbolInfo.type === 'forex') {
+      const response = await axios.get(
+        `https://api.frankfurter.app/latest?from=${symbolInfo.id}&to=USD`
+      );
+      return Array(100).fill(response.data.rates.USD);
+    }
   } catch (error) {
-    console.error('خطا در دریافت داده:', error);
+    console.error('خطا در دریافت داده:', error.message);
     return null;
   }
 }
 
+// تابع تولید سیگنال (بدون تغییر)
 function generateSignal(indicators) {
   const signals = [];
   
@@ -58,6 +84,7 @@ function generateSignal(indicators) {
   };
 }
 
+// تحلیل تکنیکال
 app.get('/api/analyze/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
@@ -72,32 +99,28 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       return res.status(500).json({error: 'داده کافی برای تحلیل وجود ندارد'});
     }
 
-    const rsiValues = technicalindicators.rsi({values: prices, period: 14}) || [];
-    const sma50Values = technicalindicators.sma({values: prices, period: 50}) || [];
-    const sma200Values = technicalindicators.sma({values: prices, period: 200}) || [];
-    const ema20Values = technicalindicators.ema({values: prices, period: 20}) || [];
-    const macdValues = technicalindicators.macd({
-      values: prices,
-      fastPeriod: 12,
-      slowPeriod: 26,
-      signalPeriod: 9
-    }) || [{}];
-
+    // محاسبه اندیکاتورها
     const indicators = {
-      rsi: rsiValues.slice(-1)[0] || 50,
-      sma50: sma50Values.slice(-1)[0] || prices.slice(-50).reduce((a, b) => a + b, 0) / 50,
-      sma200: sma200Values.slice(-1)[0] || prices.slice(-200).reduce((a, b) => a + b, 0) / 200,
-      ema20: ema20Values.slice(-1)[0] || prices.slice(-20).reduce((a, b) => a + b, 0) / 20,
-      macd: macdValues.slice(-1)[0] || {MACD: 0, signal: 0, histogram: 0}
+      rsi: technicalindicators.rsi({values: prices, period: 14}).slice(-1)[0],
+      sma50: technicalindicators.sma({values: prices, period: 50}).slice(-1)[0],
+      sma200: technicalindicators.sma({values: prices, period: 200}).slice(-1)[0],
+      ema20: technicalindicators.ema({values: prices, period: 20}).slice(-1)[0],
+      macd: technicalindicators.macd({
+        values: prices,
+        fastPeriod: 12,
+        slowPeriod: 26,
+        signalPeriod: 9
+      }).slice(-1)[0]
     };
 
+    // نتیجه نهایی
     res.json({
       symbol,
       name: symbolInfo.name,
-      lastPrice: prices[prices.length - 1] || 0,
+      lastPrice: prices[prices.length - 1],
       trend: indicators.ema20 > indicators.sma200 ? 'صعودی' : 'نزولی',
-      support: Math.min(...prices.slice(-30)) || 0,
-      resistance: Math.max(...prices.slice(-30)) || 0,
+      support: Math.min(...prices.slice(-30)),
+      resistance: Math.max(...prices.slice(-30)),
       indicators,
       signal: generateSignal(indicators),
       lastUpdate: new Date()
@@ -108,6 +131,7 @@ app.get('/api/analyze/:symbol', async (req, res) => {
   }
 });
 
+// لیست نمادهای پشتیبانی شده
 app.get('/api/symbols', (req, res) => {
   const symbols = {};
   for (const [key, value] of Object.entries(SYMBOL_DB)) {
@@ -116,6 +140,7 @@ app.get('/api/symbols', (req, res) => {
   res.json(symbols);
 });
 
+// برای اجرای محلی
 if (process.env.NODE_ENV !== 'production') {
   app.listen(3000, () => console.log('سرور محلی در حال اجرا در http://localhost:3000'));
 }
