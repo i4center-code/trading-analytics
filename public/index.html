@@ -5,12 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تحلیلگر حرفه‌ای بازار</title>
   <style>
-    /* استایل‌های قبلی + استایل‌های جدید */
-    .signal-buy { background: rgba(56, 161, 105, 0.1); border-left: 4px solid #38a169; }
-    .signal-sell { background: rgba(229, 62, 62, 0.1); border-left: 4px solid #e53e3e; }
-    .signal-confidence { font-weight: bold; }
-    .signal-details { margin-top: 10px; padding-right: 10px; }
-    .signal-details li { margin: 5px 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    #symbol-input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    #analyze-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin-right: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #analyze-btn:hover {
+      background-color: #2980b9;
+    }
+    .card {
+      background: white;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .positive { color: #27ae60; }
+    .negative { color: #e74c3c; }
+    .loading {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .signal-buy { 
+      background: rgba(39, 174, 96, 0.1); 
+      border-right: 4px solid #27ae60;
+    }
+    .signal-sell { 
+      background: rgba(231, 76, 60, 0.1); 
+      border-right: 4px solid #e74c3c;
+    }
+    .signal-confidence {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .signal-details {
+      margin-top: 10px;
+      padding-right: 10px;
+    }
+    .signal-details li {
+      margin: 5px 0;
+      list-style-type: disc;
+    }
+    .indicator {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
   </style>
 </head>
 <body>
@@ -31,15 +118,21 @@
   <script>
     // دریافت لیست نمادها
     async function loadSymbols() {
-      const response = await fetch('http://localhost:3000/symbols');
-      const symbols = await response.json();
-      
-      const datalist = document.getElementById('symbols-list');
-      for (const [symbol, name] of Object.entries(symbols)) {
-        const option = document.createElement('option');
-        option.value = symbol;
-        option.textContent = `${symbol} (${name})`;
-        datalist.appendChild(option);
+      try {
+        const response = await fetch('/api/symbols');
+        const symbols = await response.json();
+        
+        const datalist = document.getElementById('symbols-list');
+        datalist.innerHTML = '';
+        
+        for (const [symbol, name] of Object.entries(symbols)) {
+          const option = document.createElement('option');
+          option.value = symbol;
+          option.textContent = `${symbol} (${name})`;
+          datalist.appendChild(option);
+        }
+      } catch (error) {
+        console.error('خطا در دریافت نمادها:', error);
       }
     }
 
@@ -56,7 +149,7 @@
       resultDiv.innerHTML = '<div class="loading"></div> در حال تحلیل...';
 
       try {
-        const response = await fetch(`http://localhost:3000/analyze/${symbol}`);
+        const response = await fetch(`/api/analyze/${symbol}`);
         const data = await response.json();
 
         if (data.error) {
@@ -67,7 +160,7 @@
         renderAnalysis(data);
       } catch (error) {
         resultDiv.innerHTML = `
-          <div style="color: #e53e3e; text-align: center;">
+          <div style="color: #e74c3c; text-align: center;">
             <p>خطا: ${error.message}</p>
             <button onclick="loadSymbols()">مشاهده لیست نمادها</button>
           </div>
@@ -82,10 +175,10 @@
       document.getElementById('analysis-result').innerHTML = `
         <div class="card">
           <h2>${data.name} (${data.symbol})</h2>
-          <p>آخرین قیمت: <strong>${data.lastPrice.toFixed(6)}</strong></p>
+          <p>آخرین قیمت: <strong>${data.lastPrice.toLocaleString('fa-IR')}</strong></p>
           <p>روند: <strong class="${data.trend === 'صعودی' ? 'positive' : 'negative'}">${data.trend}</strong></p>
-          <p>حمایت: <strong>${data.support.toFixed(6)}</strong></p>
-          <p>مقاومت: <strong>${data.resistance.toFixed(6)}</strong></p>
+          <p>حمایت: <strong>${data.support.toLocaleString('fa-IR')}</strong></p>
+          <p>مقاومت: <strong>${data.resistance.toLocaleString('fa-IR')}</strong></p>
         </div>
         
         <div class="card ${signalClass}">
@@ -101,10 +194,10 @@
         <div class="card">
           <h3>اندیکاتورهای تکنیکال</h3>
           <div class="indicator"><span>RSI (14):</span> <strong>${data.indicators.rsi.toFixed(2)}</strong></div>
-          <div class="indicator"><span>SMA (50):</span> <strong>${data.indicators.sma50.toFixed(6)}</strong></div>
-          <div class="indicator"><span>SMA (200):</span> <strong>${data.indicators.sma200.toFixed(6)}</strong></div>
-          <div class="indicator"><span>EMA (20):</span> <strong>${data.indicators.ema20.toFixed(6)}</strong></div>
-          <div class="indicator"><span>MACD:</span> <strong>${data.indicators.macd.MACD.toFixed(6)}</strong></div>
+          <div class="indicator"><span>SMA (50):</span> <strong>${data.indicators.sma50.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>SMA (200):</span> <strong>${data.indicators.sma200.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>EMA (20):</span> <strong>${data.indicators.ema20.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>MACD:</span> <strong>${data.indicators.macd.MACD.toLocaleString('fa-IR')}</strong></div>
         </div>
         
         <p style="text-align: center; color: #666; font-size: 0.9em;">
