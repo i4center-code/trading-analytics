@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحلیلگر حرفه‌ای بازار</title>
+  <style>
+    /* استایل‌های قبلی + استایل‌های جدید */
+    .signal-buy { background: rgba(56, 161, 105, 0.1); border-left: 4px solid #38a169; }
+    .signal-sell { background: rgba(229, 62, 62, 0.1); border-left: 4px solid #e53e3e; }
+    .signal-confidence { font-weight: bold; }
+    .signal-details { margin-top: 10px; padding-right: 10px; }
+    .signal-details li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>تحلیلگر حرفه‌ای بازار</h1>
+    
+    <div class="input-group">
+      <input type="text" id="symbol-input" placeholder="مثلاً BTC, XAU, EURUSD" list="symbols-list">
+      <datalist id="symbols-list"></datalist>
+      <button id="analyze-btn">تحلیل کن</button>
+    </div>
+    
+    <div id="analysis-result">
+      <p style="text-align: center; color: #666;">نماد مورد نظر را وارد کنید یا از لیست انتخاب کنید</p>
+    </div>
+  </div>
+
+  <script>
+    // دریافت لیست نمادها
+    async function loadSymbols() {
+      const response = await fetch('http://localhost:3000/symbols');
+      const symbols = await response.json();
+      
+      const datalist = document.getElementById('symbols-list');
+      for (const [symbol, name] of Object.entries(symbols)) {
+        const option = document.createElement('option');
+        option.value = symbol;
+        option.textContent = `${symbol} (${name})`;
+        datalist.appendChild(option);
+      }
+    }
+
+    // تحلیل نماد
+    document.getElementById('analyze-btn').addEventListener('click', async function() {
+      const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
+      
+      if (!symbol) {
+        alert('لطفاً نماد را وارد کنید');
+        return;
+      }
+
+      const resultDiv = document.getElementById('analysis-result');
+      resultDiv.innerHTML = '<div class="loading"></div> در حال تحلیل...';
+
+      try {
+        const response = await fetch(`http://localhost:3000/analyze/${symbol}`);
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // نمایش نتایج
+        renderAnalysis(data);
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="color: #e53e3e; text-align: center;">
+            <p>خطا: ${error.message}</p>
+            <button onclick="loadSymbols()">مشاهده لیست نمادها</button>
+          </div>
+        `;
+      }
+    });
+
+    // تابع نمایش نتایج
+    function renderAnalysis(data) {
+      const signalClass = data.signal.decision === 'خرید' ? 'signal-buy' : 'signal-sell';
+      
+      document.getElementById('analysis-result').innerHTML = `
+        <div class="card">
+          <h2>${data.name} (${data.symbol})</h2>
+          <p>آخرین قیمت: <strong>${data.lastPrice.toFixed(6)}</strong></p>
+          <p>روند: <strong class="${data.trend === 'صعودی' ? 'positive' : 'negative'}">${data.trend}</strong></p>
+          <p>حمایت: <strong>${data.support.toFixed(6)}</strong></p>
+          <p>مقاومت: <strong>${data.resistance.toFixed(6)}</strong></p>
+        </div>
+        
+        <div class="card ${signalClass}">
+          <h3>🚦 سیگنال پیشنهادی: ${data.signal.decision}</h3>
+          <p>میزان اطمینان: <span class="signal-confidence">${data.signal.confidence.toFixed(0)}%</span></p>
+          <div class="signal-details">
+            <ul>
+              ${data.signal.details.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3>اندیکاتورهای تکنیکال</h3>
+          <div class="indicator"><span>RSI (14):</span> <strong>${data.indicators.rsi.toFixed(2)}</strong></div>
+          <div class="indicator"><span>SMA (50):</span> <strong>${data.indicators.sma50.toFixed(6)}</strong></div>
+          <div class="indicator"><span>SMA (200):</span> <strong>${data.indicators.sma200.toFixed(6)}</strong></div>
+          <div class="indicator"><span>EMA (20):</span> <strong>${data.indicators.ema20.toFixed(6)}</strong></div>
+          <div class="indicator"><span>MACD:</span> <strong>${data.indicators.macd.MACD.toFixed(6)}</strong></div>
+        </div>
+        
+        <p style="text-align: center; color: #666; font-size: 0.9em;">
+          آخرین به‌روزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
+        </p>
+      `;
+    }
+
+    // بارگذاری اولیه
+    loadSymbols();
+  </script>
+</body>
+</html>
