@@ -116,7 +116,6 @@
   </div>
 
   <script>
-    // دریافت لیست نمادها
     async function loadSymbols() {
       try {
         const response = await fetch('/api/symbols');
@@ -136,7 +135,6 @@
       }
     }
 
-    // تحلیل نماد
     document.getElementById('analyze-btn').addEventListener('click', async function() {
       const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
       
@@ -156,7 +154,6 @@
           throw new Error(data.error);
         }
 
-        // نمایش نتایج
         renderAnalysis(data);
       } catch (error) {
         resultDiv.innerHTML = `
@@ -168,45 +165,66 @@
       }
     });
 
-    // تابع نمایش نتایج
     function renderAnalysis(data) {
-      const signalClass = data.signal.decision === 'خرید' ? 'signal-buy' : 'signal-sell';
-      
+      const safeData = {
+        ...data,
+        lastPrice: data.lastPrice || 0,
+        support: data.support || 0,
+        resistance: data.resistance || 0,
+        indicators: {
+          rsi: data.indicators?.rsi || 50,
+          sma50: data.indicators?.sma50 || 0,
+          sma200: data.indicators?.sma200 || 0,
+          ema20: data.indicators?.ema20 || 0,
+          macd: {
+            MACD: data.indicators?.macd?.MACD || 0,
+            signal: data.indicators?.macd?.signal || 0
+          }
+        },
+        signal: {
+          decision: data.signal?.decision || 'نامشخص',
+          confidence: data.signal?.confidence || 0,
+          details: data.signal?.details || ['اطلاعات کافی موجود نیست']
+        }
+      };
+
+      const signalClass = safeData.signal.decision === 'خرید' ? 'signal-buy' : 
+                         safeData.signal.decision === 'فروش' ? 'signal-sell' : 'signal-neutral';
+
       document.getElementById('analysis-result').innerHTML = `
         <div class="card">
-          <h2>${data.name} (${data.symbol})</h2>
-          <p>آخرین قیمت: <strong>${data.lastPrice.toLocaleString('fa-IR')}</strong></p>
-          <p>روند: <strong class="${data.trend === 'صعودی' ? 'positive' : 'negative'}">${data.trend}</strong></p>
-          <p>حمایت: <strong>${data.support.toLocaleString('fa-IR')}</strong></p>
-          <p>مقاومت: <strong>${data.resistance.toLocaleString('fa-IR')}</strong></p>
+          <h2>${safeData.name} (${safeData.symbol})</h2>
+          <p>آخرین قیمت: <strong>${safeData.lastPrice.toLocaleString('fa-IR')}</strong></p>
+          <p>روند: <strong class="${safeData.trend === 'صعودی' ? 'positive' : 'negative'}">${safeData.trend}</strong></p>
+          <p>حمایت: <strong>${safeData.support.toLocaleString('fa-IR')}</strong></p>
+          <p>مقاومت: <strong>${safeData.resistance.toLocaleString('fa-IR')}</strong></p>
         </div>
         
         <div class="card ${signalClass}">
-          <h3>🚦 سیگنال پیشنهادی: ${data.signal.decision}</h3>
-          <p>میزان اطمینان: <span class="signal-confidence">${data.signal.confidence.toFixed(0)}%</span></p>
+          <h3>🚦 سیگنال پیشنهادی: ${safeData.signal.decision}</h3>
+          <p>میزان اطمینان: <span class="signal-confidence">${safeData.signal.confidence.toFixed(0)}%</span></p>
           <div class="signal-details">
             <ul>
-              ${data.signal.details.map(item => `<li>${item}</li>`).join('')}
+              ${safeData.signal.details.map(item => `<li>${item}</li>`).join('')}
             </ul>
           </div>
         </div>
         
         <div class="card">
           <h3>اندیکاتورهای تکنیکال</h3>
-          <div class="indicator"><span>RSI (14):</span> <strong>${data.indicators.rsi.toFixed(2)}</strong></div>
-          <div class="indicator"><span>SMA (50):</span> <strong>${data.indicators.sma50.toLocaleString('fa-IR')}</strong></div>
-          <div class="indicator"><span>SMA (200):</span> <strong>${data.indicators.sma200.toLocaleString('fa-IR')}</strong></div>
-          <div class="indicator"><span>EMA (20):</span> <strong>${data.indicators.ema20.toLocaleString('fa-IR')}</strong></div>
-          <div class="indicator"><span>MACD:</span> <strong>${data.indicators.macd.MACD.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>RSI (14):</span> <strong>${safeData.indicators.rsi.toFixed(2)}</strong></div>
+          <div class="indicator"><span>SMA (50):</span> <strong>${safeData.indicators.sma50.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>SMA (200):</span> <strong>${safeData.indicators.sma200.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>EMA (20):</span> <strong>${safeData.indicators.ema20.toLocaleString('fa-IR')}</strong></div>
+          <div class="indicator"><span>MACD:</span> <strong>${safeData.indicators.macd.MACD.toLocaleString('fa-IR')}</strong></div>
         </div>
         
         <p style="text-align: center; color: #666; font-size: 0.9em;">
-          آخرین به‌روزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
+          آخرین به‌روزرسانی: ${new Date(safeData.lastUpdate).toLocaleString('fa-IR')}
         </p>
       `;
     }
 
-    // بارگذاری اولیه
     loadSymbols();
   </script>
 </body>
