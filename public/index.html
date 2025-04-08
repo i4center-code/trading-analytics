@@ -64,24 +64,6 @@
       text-align: center;
       margin: 15px 0;
     }
-    .levels {
-      display: flex;
-      justify-content: space-between;
-      margin: 20px 0;
-    }
-    .support, .resistance {
-      width: 48%;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .support {
-      background-color: rgba(46, 204, 113, 0.1);
-      border-right: 3px solid #2ecc71;
-    }
-    .resistance {
-      background-color: rgba(231, 76, 60, 0.1);
-      border-right: 3px solid #e74c3c;
-    }
     .indicator {
       margin: 10px 0;
       padding: 10px;
@@ -96,6 +78,8 @@
       color: #e74c3c;
       text-align: center;
       padding: 20px;
+      background-color: rgba(231, 76, 60, 0.1);
+      border-radius: 8px;
     }
     .retry-btn {
       margin-top: 10px;
@@ -159,7 +143,7 @@
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="loading">
-          <p>در حال تحلیل نماد ${symbol} ...</p>
+          <p>در حال اتصال به سرور ایران افیکس ...</p>
         </div>
       `;
       
@@ -179,36 +163,19 @@
 
     // نمایش نتیجه
     function showResult(data) {
-      const priceColor = data.trend === 'صعودی' ? '#27ae60' : '#e74c3c';
-      const rsiStatus = data.indicators.rsi < 30 ? 'اشباع فروش' : 
-                       data.indicators.rsi > 70 ? 'اشباع خرید' : 'نرمال';
-      
       document.getElementById('analysis-result').innerHTML = `
         <div class="result-card">
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
-          <div class="price" style="color: ${priceColor}">
+          <div class="price">
             قیمت فعلی: ${formatPrice(data.lastPrice)}
           </div>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
           </p>
           
-          <div class="levels">
-            <div class="support">
-              <h3>سطوح حمایت</h3>
-              <p>حمایت قوی: ${formatPrice(data.supports[0])}</p>
-              <p>حمایت ضعیف: ${formatPrice(data.supports[1])}</p>
-            </div>
-            <div class="resistance">
-              <h3>سطوح مقاومت</h3>
-              <p>مقاومت ضعیف: ${formatPrice(data.resistances[0])}</p>
-              <p>مقاومت قوی: ${formatPrice(data.resistances[1])}</p>
-            </div>
-          </div>
-          
           <div class="indicator">
             <h3>اندیکاتورها</h3>
-            <p>RSI (14): ${data.indicators.rsi.toFixed(2)} - وضعیت: ${rsiStatus}</p>
+            <p>RSI (14): ${data.indicators.rsi.toFixed(2)}</p>
             <p>MACD: ${data.indicators.macd.MACD.toFixed(4)}</p>
           </div>
         </div>
@@ -219,8 +186,8 @@
     function showError(error) {
       document.getElementById('analysis-result').innerHTML = `
         <div class="error">
-          <p>خطا در تحلیل نماد</p>
           <p>${error.message}</p>
+          <p>لطفاً بعداً تلاش کنید</p>
           <button class="retry-btn" onclick="location.reload()">تلاش مجدد</button>
         </div>
       `;
