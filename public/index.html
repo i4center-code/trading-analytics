@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تحلیلگر ایران افیکس</title>
+  <title>تحلیلگر ایران افیکس - نسخه حرفه‌ای</title>
   <style>
+    /* استایل‌های قبلی با بهبودهای جدید */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f5f5f5;
       margin: 0;
       padding: 0;
+      line-height: 1.6;
     }
     .header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px 30px;
-      background-color: #2c3e50;
-      color: white;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
     .logo {
@@ -51,58 +53,81 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
+      transition: background-color 0.3s;
     }
-    .result-card {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 15px 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    #analyze-btn:hover {
+      background-color: #2980b9;
     }
-    .price {
+    .analysis-result {
+      margin-top: 20px;
+    }
+    .price-display {
       font-size: 24px;
       font-weight: bold;
       text-align: center;
-      margin: 15px 0;
-    }
-    .levels {
-      display: flex;
-      justify-content: space-between;
       margin: 20px 0;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #f8f9fa;
     }
-    .support, .resistance {
-      width: 48%;
+    .levels-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .support-level, .resistance-level {
       padding: 15px;
       border-radius: 8px;
     }
-    .support {
+    .support-level {
       background-color: rgba(46, 204, 113, 0.1);
-      border-right: 3px solid #2ecc71;
+      border-right: 4px solid #2ecc71;
     }
-    .resistance {
+    .resistance-level {
       background-color: rgba(231, 76, 60, 0.1);
-      border-right: 3px solid #e74c3c;
+      border-right: 4px solid #e74c3c;
     }
-    .indicator {
-      margin: 10px 0;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 5px;
+    .indicator-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .indicator-value {
+      font-weight: bold;
+      margin-left: 10px;
     }
     .loading {
       text-align: center;
-      padding: 30px;
+      padding: 40px;
     }
-    .error {
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error-message {
       color: #e74c3c;
       text-align: center;
       padding: 20px;
+      background-color: rgba(231, 76, 60, 0.1);
+      border-radius: 8px;
+      margin: 20px 0;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>تحلیلگر ایران افیکس</h1>
+    <h1>تحلیلگر حرفه‌ای ایران افیکس</h1>
     <img src="https://app.puzzley.net/uploads/user/5VoB/app/iconiranfx.png" alt="لوگوی ایران افیکس" class="logo">
   </div>
 
@@ -110,106 +135,146 @@
     <div class="input-group">
       <input type="text" id="symbol-input" placeholder="مثلاً BTC, ETH, EURUSD" list="symbols-list">
       <datalist id="symbols-list"></datalist>
-      <button id="analyze-btn">تحلیل کن</button>
+      <button id="analyze-btn">تحلیل فنی</button>
     </div>
     
     <div id="analysis-result">
-      <p style="text-align: center; color: #666;">نماد مورد نظر را انتخاب کنید</p>
+      <p style="text-align: center; color: #666;">نماد مورد نظر خود را وارد کنید</p>
     </div>
   </div>
 
   <script>
-    // بارگذاری نمادها
-    async function loadSymbols() {
+    // بارگذاری نمادهای موجود
+    async function loadAvailableSymbols() {
       try {
         const response = await fetch('/api/symbols');
+        if (!response.ok) throw new Error('خطا در دریافت نمادها');
+        
         const symbols = await response.json();
-        
         const datalist = document.getElementById('symbols-list');
-        datalist.innerHTML = '';
         
+        datalist.innerHTML = '';
         for (const [symbol, data] of Object.entries(symbols)) {
           const option = document.createElement('option');
           option.value = symbol;
-          option.textContent = `${symbol} (${data.name})`;
+          option.textContent = `${symbol} - ${data.name}`;
           datalist.appendChild(option);
         }
       } catch (error) {
-        console.error('خطا در دریافت نمادها:', error);
+        console.error('خطا:', error);
       }
     }
 
     // تحلیل نماد
     document.getElementById('analyze-btn').addEventListener('click', async () => {
       const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
-      
       if (!symbol) {
         alert('لطفاً نماد مورد نظر را وارد کنید');
         return;
       }
 
-      const resultDiv = document.getElementById('analysis-result');
-      resultDiv.innerHTML = `
-        <div class="loading">
-          <p>در حال دریافت داده‌های ${symbol} ...</p>
-        </div>
-      `;
+      displayLoadingState(symbol);
       
       try {
-        const response = await fetch(`/api/analyze/${symbol}`);
-        if (!response.ok) {
-          throw new Error('نماد یافت نشد');
-        }
-        
-        const data = await response.json();
-        showResult(data);
+        const analysisData = await fetchAnalysisData(symbol);
+        displayAnalysisResult(analysisData);
       } catch (error) {
-        resultDiv.innerHTML = `
-          <div class="error">
-            <p>خطا: ${error.message}</p>
-            <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 15px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer;">
-              تلاش مجدد
-            </button>
-          </div>
-        `;
+        displayErrorState(error);
       }
     });
 
-    // نمایش نتیجه
-    function showResult(data) {
-      const rsiStatus = data.indicators.rsi < 30 ? 'اشباع فروش' : 
-                       data.indicators.rsi > 70 ? 'اشباع خرید' : 'نرمال';
+    // نمایش حالت بارگذاری
+    function displayLoadingState(symbol) {
+      document.getElementById('analysis-result').innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>در حال دریافت آخرین داده‌های ${symbol} از سرور...</p>
+        </div>
+      `;
+    }
+
+    // دریافت داده‌های تحلیل
+    async function fetchAnalysisData(symbol) {
+      const response = await fetch(`/api/analyze/${symbol}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'خطا در دریافت داده از سرور');
+      }
+      return await response.json();
+    }
+
+    // نمایش نتیجه تحلیل
+    function displayAnalysisResult(data) {
+      const priceColor = data.trend === 'صعودی' ? '#27ae60' : '#e74c3c';
+      const rsiState = getRsiState(data.indicators.rsi);
+      const macdState = getMacdState(data.indicators.macd);
       
       document.getElementById('analysis-result').innerHTML = `
-        <div class="result-card">
-          <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
-          <div class="price" style="color: ${data.lastPrice > data.supports[0] ? '#27ae60' : '#e74c3c'}">
-            قیمت فعلی: ${formatPrice(data.lastPrice)}
+        <div class="analysis-result">
+          <h2 style="text-align: center; color: #2c3e50;">${data.name} (${data.symbol})</h2>
+          
+          <div class="price-display" style="color: ${priceColor}">
+            قیمت فعلی: ${formatPrice(data.lastPrice)} USD
           </div>
+          
           <p style="text-align: center; color: #7f8c8d;">
-            آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
+            آخرین به‌روزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
           </p>
           
-          <div class="levels">
-            <div class="support">
+          <div class="levels-container">
+            <div class="support-level">
               <h3>سطوح حمایت</h3>
               <p>حمایت قوی: ${formatPrice(data.supports[0])}</p>
               <p>حمایت ضعیف: ${formatPrice(data.supports[1])}</p>
             </div>
-            <div class="resistance">
+            
+            <div class="resistance-level">
               <h3>سطوح مقاومت</h3>
               <p>مقاومت ضعیف: ${formatPrice(data.resistances[0])}</p>
               <p>مقاومت قوی: ${formatPrice(data.resistances[1])}</p>
             </div>
           </div>
           
-          <div class="indicator">
-            <h3>اندیکاتورها</h3>
-            <p>RSI (14): ${data.indicators.rsi.toFixed(2)} - وضعیت: ${rsiStatus}</p>
-            <p>MACD: ${data.indicators.macd.MACD.toFixed(4)}</p>
+          <div class="indicator-card">
+            <h3>تحلیل تکنیکال</h3>
+            <p>روند کلی: <span style="color: ${priceColor}; font-weight: bold">${data.trend}</span></p>
+            <p>شاخص RSI: <span class="indicator-value" style="color: ${rsiState.color}">
+              ${data.indicators.rsi.toFixed(2)} (${rsiState.text})
+            </span></p>
+            <p>شاخص MACD: <span class="indicator-value" style="color: ${macdState.color}">
+              ${data.indicators.macd.MACD.toFixed(4)} (${macdState.text})
+            </span></p>
           </div>
         </div>
       `;
+    }
+
+    // نمایش حالت خطا
+    function displayErrorState(error) {
+      document.getElementById('analysis-result').innerHTML = `
+        <div class="error-message">
+          <p>خطا در تحلیل نماد</p>
+          <p>${error.message}</p>
+          <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 15px; 
+          background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            تلاش مجدد
+          </button>
+        </div>
+      `;
+    }
+
+    // وضعیت RSI
+    function getRsiState(rsiValue) {
+      if (rsiValue < 30) return { text: 'اشباع فروش', color: '#27ae60' };
+      if (rsiValue > 70) return { text: 'اشباع خرید', color: '#e74c3c' };
+      return { text: 'نرمال', color: '#3498db' };
+    }
+
+    // وضعیت MACD
+    function getMacdState(macdData) {
+      return macdData.MACD > macdData.signal 
+        ? { text: 'صعودی', color: '#27ae60' } 
+        : { text: 'نزولی', color: '#e74c3c' };
     }
 
     // فرمت نمایش قیمت
@@ -219,12 +284,12 @@
       } else if (price >= 1) {
         return price.toFixed(2).replace('.', ',');
       } else {
-        return price.toFixed(4).replace('.', ',');
+        return price.toFixed(6).replace('.', ',');
       }
     }
 
-    // شروع برنامه
-    loadSymbols();
+    // بارگذاری اولیه نمادها
+    loadAvailableSymbols();
   </script>
 </body>
 </html>
