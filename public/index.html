@@ -5,230 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تحلیلگر پیشرفته بازار</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-      color: #333;
+    /* استایل‌های قبلی را حفظ کنید و این استایل‌های جدید را اضافه کنید */
+    
+    .gauge-container {
+      width: 200px;
+      height: 200px;
+      margin: 20px auto;
+      position: relative;
     }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      color: #2c3e50;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .input-group {
-      display: flex;
-      margin-bottom: 20px;
-    }
-    #symbol-input {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-    }
-    #analyze-btn {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      margin-right: 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    #analyze-btn:hover {
-      background-color: #2980b9;
-    }
-    .card {
-      background: white;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .positive { color: #27ae60; }
-    .negative { color: #e74c3c; }
-    .loading {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #3498db;
+    
+    .gauge-body {
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-      margin-left: 10px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .signal-buy { 
-      background: rgba(39, 174, 96, 0.1); 
-      border-right: 4px solid #27ae60;
-    }
-    .signal-sell { 
-      background: rgba(231, 76, 60, 0.1); 
-      border-right: 4px solid #e74c3c;
-    }
-    .signal-neutral {
-      background: rgba(241, 196, 15, 0.1);
-      border-right: 4px solid #f1c40f;
-    }
-    .signal-confidence {
-      font-weight: bold;
-      font-size: 18px;
-    }
-    .signal-details {
-      margin-top: 10px;
-      padding-right: 10px;
-    }
-    .signal-details li {
-      margin: 5px 0;
-      list-style-type: disc;
-    }
-    .indicator {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .power-meter {
-      display: flex;
-      height: 20px;
-      margin: 10px 0;
-      border-radius: 10px;
+      background: #f5f5f5;
+      position: relative;
       overflow: hidden;
+      border: 10px solid #e0e0e0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .buyer-power {
-      background-color: #27ae60;
+    
+    .gauge-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
       height: 100%;
+      background: linear-gradient(90deg, #e74c3c 0%, #f1c40f 50%, #27ae60 100%);
+      transform-origin: right center;
+      transform: rotate(0deg);
+      transition: transform 1s ease-out;
     }
-    .seller-power {
-      background-color: #e74c3c;
-      height: 100%;
-    }
-    .power-labels {
+    
+    .gauge-cover {
+      width: 80%;
+      height: 80%;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 10%;
+      left: 10%;
       display: flex;
-      justify-content: space-between;
-      margin-top: 5px;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
     }
-    .power-label {
+    
+    .gauge-needle {
+      width: 4px;
+      height: 50%;
+      background: #2c3e50;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(0deg);
+      transition: transform 1s ease-out;
+      z-index: 10;
+    }
+    
+    .gauge-labels {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 110%;
+    }
+    
+    .gauge-label {
       font-size: 14px;
       font-weight: bold;
+      display: inline-block;
+      margin: 0 10px;
     }
+    
     .buyer-label {
       color: #27ae60;
     }
+    
     .seller-label {
       color: #e74c3c;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>تحلیلگر پیشرفته بازار</h1>
-    
-    <div class="input-group">
-      <input type="text" id="symbol-input" placeholder="مثلاً BTC, XAU, EURUSD" list="symbols-list">
-      <datalist id="symbols-list"></datalist>
-      <button id="analyze-btn">تحلیل کن</button>
-    </div>
-    
-    <div id="analysis-result">
-      <p style="text-align: center; color: #666;">نماد مورد نظر را وارد کنید یا از لیست انتخاب کنید</p>
-    </div>
-  </div>
+  <!-- کدهای قبلی را حفظ کنید -->
 
   <script>
-    // دریافت لیست نمادها
-    async function loadSymbols() {
-      try {
-        const response = await fetch('/api/symbols');
-        const symbols = await response.json();
-        
-        const datalist = document.getElementById('symbols-list');
-        datalist.innerHTML = '';
-        
-        for (const [symbol, name] of Object.entries(symbols)) {
-          const option = document.createElement('option');
-          option.value = symbol;
-          option.textContent = `${symbol} (${name})`;
-          datalist.appendChild(option);
-        }
-      } catch (error) {
-        console.error('خطا در دریافت نمادها:', error);
-      }
-    }
-
-    // تحلیل نماد
-    document.getElementById('analyze-btn').addEventListener('click', async function() {
-      const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
-      
-      if (!symbol) {
-        alert('لطفاً نماد را وارد کنید');
-        return;
-      }
-
-      const resultDiv = document.getElementById('analysis-result');
-      resultDiv.innerHTML = '<div class="loading"></div> در حال تحلیل...';
-
-      try {
-        const response = await fetch(`/api/analyze/${symbol}`);
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        // نمایش نتایج
-        renderAdvancedAnalysis(data);
-      } catch (error) {
-        resultDiv.innerHTML = `
-          <div style="color: #e74c3c; text-align: center;">
-            <p>خطا: ${error.message}</p>
-            <button onclick="loadSymbols()">مشاهده لیست نمادها</button>
-          </div>
-        `;
-      }
-    });
-
-    // تابع نمایش پیشرفته نتایج
+    // تابع نمایش پیشرفته نتایج با نمایشگر عقربه‌ای
     function renderAdvancedAnalysis(data) {
-      const signalClass = 
-        data.signal.decision.includes('قوی') ? 
-          (data.signal.decision.includes('خرید') ? 'signal-buy' : 'signal-sell') :
-        'signal-neutral';
+      // محاسبه زاویه عقربه (از -90 تا 90 درجه)
+      const netPower = data.signal.buyerPower - data.signal.sellerPower;
+      const needleAngle = (netPower / 100) * 180 - 90;
       
       document.getElementById('analysis-result').innerHTML = `
         <div class="card">
           <h2>${data.name} (${data.symbol})</h2>
           <p>آخرین قیمت: <strong>${data.lastPrice.toLocaleString('fa-IR')}</strong></p>
-          <p>روند کلی: <strong class="${data.trend === 'صعودی' ? 'positive' : 'negative'}">${data.trend}</strong></p>
-          <p>حمایت: <strong>${data.support.toLocaleString('fa-IR')}</strong></p>
-          <p>مقاومت: <strong>${data.resistance.toLocaleString('fa-IR')}</strong></p>
         </div>
         
-        <div class="card ${signalClass}">
-          <h3>🚦 سیگنال: ${data.signal.decision}</h3>
-          <p>میزان اطمینان: <span class="signal-confidence">${data.signal.confidence}%</span></p>
-          <div class="power-meter">
-            <div class="buyer-power" style="width: ${data.signal.buyerPower}%"></div>
-            <div class="seller-power" style="width: ${data.signal.sellerPower}%"></div>
+        <div class="card">
+          <h3>نمودار قدرت بازار</h3>
+          <div class="gauge-container">
+            <div class="gauge-body">
+              <div class="gauge-fill"></div>
+              <div class="gauge-needle" style="transform: translateX(-50%) rotate(${needleAngle}deg)"></div>
+              <div class="gauge-cover">${data.signal.decision}</div>
+            </div>
+            <div class="gauge-labels">
+              <span class="gauge-label seller-label">فروشندگان: ${data.signal.sellerPower}%</span>
+              <span class="gauge-label buyer-label">خریداران: ${data.signal.buyerPower}%</span>
+            </div>
           </div>
-          <div class="power-labels">
-            <span class="power-label buyer-label">خریداران: ${data.signal.buyerPower}%</span>
-            <span class="power-label seller-label">فروشندگان: ${data.signal.sellerPower}%</span>
-          </div>
+          <p style="text-align: center; margin-top: 20px;">
+            میزان اطمینان: <strong>${data.signal.confidence}%</strong>
+          </p>
           <div class="signal-details">
             <ul>
               ${data.signal.details.map(item => `<li>${item}</li>`).join('')}
@@ -251,8 +143,7 @@
       `;
     }
 
-    // بارگذاری اولیه
-    loadSymbols();
+    // بقیه کدها بدون تغییر
   </script>
 </body>
 </html>
