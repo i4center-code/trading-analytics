@@ -1,168 +1,132 @@
 const express = require('express');
+const axios = require('axios');
 const technicalindicators = require('technicalindicators');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
-
-// تنظیمات اولیه
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// دیتابیس نمادها با داده‌های واقعی‌تر
-const SYMBOL_DB = {
-  'BTC': {
-    name: 'بیتکوین',
-    prices: Array.from({length: 100}, (_,i) => 76000 + Math.sin(i/3)*2000 + Math.random()*800),
-    supports: [74000, 75000],
-    resistances: [77000, 79000]
+// تنظیمات API
+const API_CONFIG = {
+  CRYPTO: {
+    BASE_URL: 'https://api.coingecko.com/api/v3',
+    SYMBOLS: {
+      BTC: 'bitcoin',
+      ETH: 'ethereum',
+      BNB: 'binancecoin',
+      XRP: 'ripple'
+    }
   },
-  'ETH': {
-    name: 'اتریوم',
-    prices: Array.from({length: 100}, (_,i) => 3500 + Math.sin(i/4)*300 + Math.random()*150),
-    supports: [3400, 3450],
-    resistances: [3600, 3700]
+  FOREX: {
+    BASE_URL: 'https://api.exchangerate-api.com/v4',
+    SYMBOLS: {
+      EURUSD: 'EUR/USD',
+      GBPUSD: 'GBP/USD',
+      USDJPY: 'USD/JPY'
+    }
   },
-  'XAU': {
-    name: 'طلا',
-    prices: Array.from({length: 100}, (_,i) => 2300 + Math.sin(i/5)*100 + Math.random()*40),
-    supports: [2250, 2280],
-    resistances: [2320, 2350]
+  METALS: {
+    BASE_URL: 'https://metals-api.com/api',
+    SYMBOLS: {
+      XAU: 'XAU/USD',
+      XAG: 'XAG/USD'
+    }
   }
 };
 
-// محاسبه قدرت بازار
-function calculateMarketStrength(prices) {
-  const changes = prices.slice(1).map((p, i) => p - prices[i]);
-  const upChanges = changes.filter(c => c > 0).length;
-  const downChanges = changes.length - upChanges;
-  
-  const buyerPower = Math.max(10, Math.min(90, 
-    Math.round((upChanges/changes.length) * 100)
-  ));
-  
-  return {
-    buyerPower: buyerPower,
-    sellerPower: 100 - buyerPower,
-    trend: upChanges > downChanges ? 'صعودی' : 'نزولی'
-  };
+// دریافت قیمت‌های واقعی از API
+async function getRealTimePrices(symbol) {
+  try {
+    let response;
+    
+    // تشخیص نوع نماد (ارز دیجیتال، فارکس یا فلزات)
+    if (API_CONFIG.CRYPTO.SYMBOLS[symbol]) {
+      const coinId = API_CONFIG.CRYPTO.SYMBOLS[symbol];
+      response = await axios.get(`${API_CONFIG.CRYPTO.BASE_URL}/coins/${coinId}/market_chart?vs_currency=usd&days=30`);
+      return response.data.prices.map(p => p[1]); // آرایه قیمت‌ها
+    }
+    else if (API_CONFIG.FOREX.SYMBOLS[symbol]) {
+      const pair = API_CONFIG.FOREX.SYMBOLS[symbol];
+      response = await axios.get(`${API_CONFIG.FOREX.BASE_URL}/latest/${pair}`);
+      return Array(100).fill(response.data.rate); // شبیه‌سازی داده تاریخی
+    }
+    else if (API_CONFIG.METALS.SYMBOLS[symbol]) {
+      const metal = API_CONFIG.METALS.SYMBOLS[symbol];
+      response = await axios.get(`${API_CONFIG.METALS.BASE_URL}/latest?access_key=YOUR_API_KEY&base=${metal.split('/')[0]}&symbols=USD`);
+      return Array(100).fill(response.data.rates.USD);
+    }
+    
+    throw new Error('نماد پشتیبانی نمی‌شود');
+  } catch (error) {
+    console.error('خطا در دریافت قیمت:', error);
+    throw error;
+  }
 }
 
-// محاسبه اندیکاتورها
-function calculateIndicators(prices) {
-  const rsi = technicalindicators.rsi({
-    values: prices,
-    period: 14
-  }).slice(-1)[0] || 50;
-  
-  const macd = technicalindicators.macd({
-    values: prices,
-    fastPeriod: 12,
-    slowPeriod: 26,
-    signalPeriod: 9
-  }).slice(-1)[0] || {MACD: 0, signal: 0};
-  
+// محاسبه سطوح حمایت و مقاومت
+function calculateSupportResistance(prices) {
+  const sorted = [...prices].sort((a,b) => a - b);
   return {
-    rsi,
-    macd
-  };
-}
-
-// تولید سیگنال
-function generateSignal(indicators, marketStrength) {
-  const signals = [];
-  
-  // تحلیل RSI
-  if (indicators.rsi < 30) {
-    signals.push('RSI در منطقه اشباع فروش');
-  } else if (indicators.rsi > 70) {
-    signals.push('RSI در منطقه اشباع خرید');
-  }
-  
-  // تحلیل MACD
-  if (indicators.macd.MACD > indicators.macd.signal) {
-    signals.push('MACD صعودی');
-  } else {
-    signals.push('MACD نزولی');
-  }
-  
-  // تحلیل روند بازار
-  if (marketStrength.trend === 'صعودی') {
-    signals.push('روند بازار صعودی');
-  } else {
-    signals.push('روند بازار نزولی');
-  }
-  
-  // تصمیم نهایی
-  const buyPoints = signals.filter(s => s.includes('صعودی') || s.includes('اشباع فروش')).length;
-  const sellPoints = signals.filter(s => s.includes('نزولی') || s.includes('اشباع خرید')).length;
-  
-  return {
-    decision: buyPoints > sellPoints ? 'خرید' : 'فروش',
-    confidence: Math.round((Math.abs(buyPoints - sellPoints) / signals.length) * 100),
-    details: signals
+    supports: [
+      sorted[Math.floor(sorted.length * 0.15)], // حمایت اول (15% پایین)
+      sorted[Math.floor(sorted.length * 0.3)]   // حمایت دوم (30% پایین)
+    ],
+    resistances: [
+      sorted[Math.floor(sorted.length * 0.7)],  // مقاومت اول (70% بالا)
+      sorted[Math.floor(sorted.length * 0.85)]  // مقاومت دوم (85% بالا)
+    ]
   };
 }
 
 // مسیر تحلیل نماد
-app.get('/api/analyze/:symbol', (req, res) => {
+app.get('/api/analyze/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-    const asset = SYMBOL_DB[symbol];
     
-    if (!asset) {
-      return res.status(404).json({error: 'نماد پشتیبانی نمی‌شود'});
-    }
-
+    // دریافت قیمت‌های واقعی
+    const prices = await getRealTimePrices(symbol);
+    const lastPrice = prices[prices.length - 1];
+    
+    // محاسبه سطوح
+    const {supports, resistances} = calculateSupportResistance(prices);
+    
     // محاسبه اندیکاتورها
-    const indicators = calculateIndicators(asset.prices);
-    const currentPrice = asset.prices[asset.prices.length - 1];
-
-    // محاسبه قدرت بازار
-    const marketStrength = calculateMarketStrength(asset.prices);
-    
-    // تولید سیگنال
-    const signal = generateSignal(indicators, marketStrength);
+    const indicators = {
+      rsi: technicalindicators.rsi({values: prices, period: 14}).slice(-1)[0] || 50,
+      macd: technicalindicators.macd({
+        values: prices,
+        fastPeriod: 12,
+        slowPeriod: 26,
+        signalPeriod: 9
+      }).slice(-1)[0] || {MACD: 0, signal: 0}
+    };
 
     // نتیجه نهایی
     res.json({
       symbol,
-      name: asset.name,
-      lastPrice: currentPrice,
-      trend: marketStrength.trend,
-      supports: asset.supports,
-      resistances: asset.resistances,
+      name: getName(symbol),
+      lastPrice,
+      supports,
+      resistances,
       indicators,
-      signal,
-      marketStrength,
       lastUpdate: new Date()
     });
     
   } catch (error) {
-    console.error('خطا در تحلیل:', error);
-    res.status(500).json({error: 'خطای سرور در تحلیل نماد'});
+    res.status(500).json({error: error.message});
   }
 });
 
-// مسیر لیست نمادها
-app.get('/api/symbols', (req, res) => {
-  const symbols = {};
-  for (const [symbol, data] of Object.entries(SYMBOL_DB)) {
-    symbols[symbol] = data.name;
-  }
-  res.json(symbols);
-});
+function getName(symbol) {
+  const names = {
+    BTC: 'بیتکوین', ETH: 'اتریوم', BNB: 'بایننس کوین', XRP: 'ریپل',
+    EURUSD: 'یورو/دلار', GBPUSD: 'پوند/دلار', USDJPY: 'دلار/ین ژاپن',
+    XAU: 'طلا', XAG: 'نقره'
+  };
+  return names[symbol] || symbol;
+}
 
-// مسیر اصلی برای صفحه وب
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// شروع سرور
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`سرور در حال اجرا در پورت ${PORT}`);
-});
-
-module.exports = app;
+// بقیه کدها...
