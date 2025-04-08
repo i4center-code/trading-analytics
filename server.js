@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 
-// فعال کردن CORS و JSON
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -38,58 +38,44 @@ function calculateMarketStrength(prices) {
   return {
     buyerPower: Math.round((upChanges / changes.length) * 100),
     sellerPower: Math.round((downChanges / changes.length) * 100),
-    strength: upChanges > downChanges ? 'صعودی' : 'نزولی'
+    trend: upChanges > downChanges ? 'صعودی' : 'نزولی'
   };
 }
 
-// تابع تولید سیگنال پیشرفته
-function generateAdvancedSignal(indicators, marketStrength) {
-  let signal = '';
-  let confidence = 0;
-  let details = [];
+// تابع تولید سیگنال
+function generateSignal(indicators, marketStrength) {
+  const signals = [];
   
   // تحلیل RSI
   if (indicators.rsi < 30) {
-    details.push('RSI در منطقه اشباع فروش');
-    confidence += 40;
+    signals.push('RSI در منطقه اشباع فروش (خرید قوی)');
   } else if (indicators.rsi > 70) {
-    details.push('RSI در منطقه اشباع خرید');
-    confidence -= 40;
+    signals.push('RSI در منطقه اشباع خرید (فروش قوی)');
   }
   
   // تحلیل MACD
   if (indicators.macd.MACD > indicators.macd.signal) {
-    details.push('MACD صعودی');
-    confidence += 30;
+    signals.push('MACD صعودی');
   } else {
-    details.push('MACD نزولی');
-    confidence -= 30;
+    signals.push('MACD نزولی');
   }
   
-  // تحلیل قدرت بازار
-  if (marketStrength.strength === 'صعودی') {
-    details.push(`قدرت خریداران: ${marketStrength.buyerPower}%`);
-    confidence += 20;
+  // تحلیل روند
+  if (marketStrength.trend === 'صعودی') {
+    signals.push('روند بازار صعودی');
   } else {
-    details.push(`قدرت فروشندگان: ${marketStrength.sellerPower}%`);
-    confidence -= 20;
+    signals.push('روند بازار نزولی');
   }
   
-  // تعیین سیگنال نهایی
-  if (confidence >= 60) signal = 'خرید قوی';
-  else if (confidence >= 30) signal = 'خرید';
-  else if (confidence <= -60) signal = 'فروش قوی';
-  else if (confidence <= -30) signal = 'فروش';
-  else signal = 'خنثی';
-  
-  // محدود کردن بازه اطمینان
-  confidence = Math.max(-100, Math.min(100, confidence));
+  // تصمیم نهایی
+  const buySignals = signals.filter(s => s.includes('خرید') || s.includes('صعودی')).length;
+  const sellSignals = signals.filter(s => s.includes('فروش') || s.includes('نزولی')).length;
   
   return {
-    decision: signal,
-    confidence: Math.abs(confidence),
-    details,
-    strength: marketStrength.strength,
+    decision: buySignals > sellSignals ? 'خرید' : 'فروش',
+    confidence: Math.round((Math.abs(buySignals - sellSignals) / signals.length) * 100),
+    details: signals,
+    strength: marketStrength.trend,
     buyerPower: marketStrength.buyerPower,
     sellerPower: marketStrength.sellerPower
   };
@@ -131,10 +117,10 @@ app.get('/api/analyze/:symbol', (req, res) => {
     const marketStrength = calculateMarketStrength(asset.prices);
     
     // تولید سیگنال
-    const signal = generateAdvancedSignal(indicators, marketStrength);
+    const signal = generateSignal(indicators, marketStrength);
 
     // نتیجه نهایی
-    const result = {
+    res.json({
       symbol,
       name: asset.name,
       lastPrice: asset.prices[asset.prices.length - 1],
@@ -143,13 +129,13 @@ app.get('/api/analyze/:symbol', (req, res) => {
       resistance: Math.max(...asset.prices.slice(-30)),
       indicators,
       signal,
+      marketStrength, // اضافه کردن این خط برای حل مشکل
       lastUpdate: new Date()
-    };
-
-    res.json(result);
+    });
     
   } catch (error) {
-    res.status(500).json({error: 'خطای سرور'});
+    console.error('خطا در تحلیل:', error);
+    res.status(500).json({error: 'خطای سرور در تحلیل نماد'});
   }
 });
 
