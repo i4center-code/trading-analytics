@@ -1,5 +1,5 @@
 {
-  "name": "iranfx-pro-analytics",
+  "name": "iranfx-analytics",
   "version": "1.0.0",
   "scripts": {
     "start": "node server.js"
@@ -8,7 +8,6 @@
     "express": "^4.18.2",
     "axios": "^1.3.4",
     "technicalindicators": "^3.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3"
+    "cors": "^2.8.5"
   }
 }
