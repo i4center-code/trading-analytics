@@ -1,12 +1,11 @@
 {
-  "name": "trading-analytics",
+  "name": "iranfx-analytics",
   "version": "1.0.0",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "axios": "^1.6.2",
     "technicalindicators": "^3.1.0",
     "cors": "^2.8.5"
   }
