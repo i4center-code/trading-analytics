@@ -555,4 +555,46 @@
       if (k < 20 && d < 20) return 'سیگنال قوی خرید - بازار احتمالاً اشباع فروش شده است';
       if (k > 80 && d > 80) return 'سیگنال قوی فروش - بازار احتمالاً اشباع خرید شده است';
       if (k > d) return 'تمایل به خرید - ممکن است روند صعودی شود';
-      if (k < d) return '
+      if (k < d) return 'تمایل به فروش - ممکن است روند نزولی شود';
+      return 'خنثی - بازار در حال تعادل است';
+    }
+    
+    function calculatePrediction(currentPrice, decision, resistances, supports) {
+      if (decision === 'خرید') {
+        // میانگین مقاومت‌ها به عنوان هدف قیمتی
+        const avgResistance = (resistances[0] + resistances[1]) / 2;
+        return avgResistance > currentPrice ? avgResistance : currentPrice * 1.02;
+      } else {
+        // میانگین حمایت‌ها به عنوان هدف قیمتی
+        const avgSupport = (supports[0] + supports[1]) / 2;
+        return avgSupport < currentPrice ? avgSupport : currentPrice * 0.98;
+      }
+    }
+    
+    function calculateStopLoss(currentPrice, decision, supports) {
+      if (decision === 'خرید') {
+        // حمایت قوی به عنوان حد ضرر
+        return supports[0] < currentPrice ? supports[0] : currentPrice * 0.98;
+      } else {
+        // مقاومت قوی به عنوان حد ضرر (برای موقعیت‌های فروش)
+        return supports[0] > currentPrice ? supports[0] : currentPrice * 1.02;
+      }
+    }
+    
+    function calculateProfitPotential(currentPrice, decision, resistances, supports) {
+      if (decision === 'خرید') {
+        const target = calculatePrediction(currentPrice, decision, resistances, supports);
+        const stopLoss = calculateStopLoss(currentPrice, decision, supports);
+        return ((target - currentPrice) / (currentPrice - stopLoss)) * 100;
+      } else {
+        const target = calculatePrediction(currentPrice, decision, resistances, supports);
+        const stopLoss = calculateStopLoss(currentPrice, decision, supports);
+        return ((currentPrice - target) / (stopLoss - currentPrice)) * 100;
+      }
+    }
+
+    // بارگذاری اولیه نمادها
+    loadSymbols();
+  </script>
+</body>
+</html>
