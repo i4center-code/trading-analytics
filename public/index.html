@@ -212,6 +212,78 @@
       color: #e74c3c;
       text-align: center;
     }
+    
+    /* جدول اندیکاتورها */
+    .indicator-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    .indicator-table th, .indicator-table td {
+      padding: 12px;
+      text-align: right;
+      border-bottom: 1px solid #ddd;
+    }
+    .indicator-table th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    .indicator-table tr:hover {
+      background-color: #f5f5f5;
+    }
+    .positive {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .negative {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    
+    /* کارت‌های اندیکاتور */
+    .indicator-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .indicator-card {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-left: 4px solid #3498db;
+    }
+    .indicator-card h4 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .indicator-card .value {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .indicator-card.buy {
+      border-left-color: #27ae60;
+    }
+    .indicator-card.sell {
+      border-left-color: #e74c3c;
+    }
+    
+    /* پیش‌بینی قیمت */
+    .price-prediction {
+      padding: 20px;
+      background-color: rgba(52, 152, 219, 0.1);
+      border-right: 4px solid #3498db;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .prediction-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px dashed #ddd;
+    }
   </style>
 </head>
 <body>
@@ -222,7 +294,7 @@
 
   <div class="container">
     <div class="input-group">
-      <input type="text" id="symbol-input" placeholder="مثلاً BTC, ETH, XAU" list="symbols-list">
+      <input type="text" id="symbol-input" placeholder="مثلاً BTC, ETH, XAU, EURUSD" list="symbols-list">
       <datalist id="symbols-list"></datalist>
       <button id="analyze-btn">تحلیل کن</button>
     </div>
@@ -296,12 +368,14 @@
       const signalClass = data.signal.decision === 'خرید' ? 'signal-buy' : 'signal-sell';
       const rsiClass = data.indicators.rsi < 30 ? 'oversold' : 
                       data.indicators.rsi > 70 ? 'overbought' : '';
+      const stochasticClass = data.indicators.stochastic.k < 20 ? 'oversold' : 
+                           data.indicators.stochastic.k > 80 ? 'overbought' : '';
       
       document.getElementById('analysis-result').innerHTML = `
         <div style="margin-bottom: 30px;">
           <h2 style="text-align: center; color: #2c3e50;">${data.name} (${data.symbol})</h2>
           <p style="text-align: center; font-size: 24px; font-weight: bold; color: ${data.trend === 'صعودی' ? '#27ae60' : '#e74c3c'}">
-            قیمت فعلی: ${data.lastPrice.toLocaleString('fa-IR')}
+            قیمت فعلی: ${formatPrice(data.lastPrice)}
           </p>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین به‌روزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
@@ -329,24 +403,28 @@
           <div class="supports">
             <h3 style="color: #27ae60;">سطوح حمایت</h3>
             <div class="level-item">
-              <span>حمایت اول:</span>
-              <span style="font-weight: bold;">${data.supports[0].toLocaleString('fa-IR')}</span>
+              <span>حمایت قوی:</span>
+              <span style="font-weight: bold;">${formatPrice(data.supports[0])}</span>
+              <span style="color: #666;">(${calculateDistance(data.lastPrice, data.supports[0])}%)</span>
             </div>
             <div class="level-item">
-              <span>حمایت دوم:</span>
-              <span style="font-weight: bold;">${data.supports[1].toLocaleString('fa-IR')}</span>
+              <span>حمایت متوسط:</span>
+              <span style="font-weight: bold;">${formatPrice(data.supports[1])}</span>
+              <span style="color: #666;">(${calculateDistance(data.lastPrice, data.supports[1])}%)</span>
             </div>
           </div>
           
           <div class="resistances">
             <h3 style="color: #e74c3c;">سطوح مقاومت</h3>
             <div class="level-item">
-              <span>مقاومت اول:</span>
-              <span style="font-weight: bold;">${data.resistances[0].toLocaleString('fa-IR')}</span>
+              <span>مقاومت قوی:</span>
+              <span style="font-weight: bold;">${formatPrice(data.resistances[0])}</span>
+              <span style="color: #666;">(${calculateDistance(data.lastPrice, data.resistances[0])}%)</span>
             </div>
             <div class="level-item">
-              <span>مقاومت دوم:</span>
-              <span style="font-weight: bold;">${data.resistances[1].toLocaleString('fa-IR')}</span>
+              <span>مقاومت متوسط:</span>
+              <span style="font-weight: bold;">${formatPrice(data.resistances[1])}</span>
+              <span style="color: #666;">(${calculateDistance(data.lastPrice, data.resistances[1])}%)</span>
             </div>
           </div>
         </div>
@@ -356,36 +434,125 @@
           <h3 class="signal-title">
             سیگنال: ${data.signal.decision} (اطمینان: ${data.signal.confidence}%)
           </h3>
+          <p style="margin-bottom: 15px; font-weight: bold;">
+            امتیاز خرید: ${data.signal.buyPoints.toFixed(1)} | امتیاز فروش: ${data.signal.sellPoints.toFixed(1)}
+          </p>
           <ul class="signal-details">
             ${data.signal.details.map(detail => `<li>${detail}</li>`).join('')}
           </ul>
         </div>
         
-        <!-- اندیکاتورها -->
+        <!-- اندیکاتورهای تکنیکال -->
         <div class="indicators">
           <h3 style="color: #2c3e50;">اندیکاتورهای تکنیکال</h3>
           
-          <div class="indicator">
-            <span>RSI (14):</span>
-            <span class="${rsiClass}">
-              ${data.indicators.rsi.toFixed(2)}
-              ${data.indicators.rsi < 30 ? '(اشباع فروش)' : data.indicators.rsi > 70 ? '(اشباع خرید)' : ''}
+          <div class="indicator-cards">
+            <!-- RSI -->
+            <div class="indicator-card ${rsiClass.includes('over') ? (rsiClass === 'oversold' ? 'buy' : 'sell') : ''}">
+              <h4>RSI (14)</h4>
+              <div class="value ${rsiClass}">
+                ${data.indicators.rsi.toFixed(2)}
+                ${data.indicators.rsi < 30 ? '(اشباع فروش)' : data.indicators.rsi > 70 ? '(اشباع خرید)' : ''}
+              </div>
+              <p>${getRSIInterpretation(data.indicators.rsi)}</p>
+            </div>
+            
+            <!-- MACD -->
+            <div class="indicator-card ${data.indicators.macd.MACD > data.indicators.macd.signal ? 'buy' : 'sell'}">
+              <h4>MACD</h4>
+              <div class="value" style="color: ${data.indicators.macd.MACD > data.indicators.macd.signal ? '#27ae60' : '#e74c3c'};">
+                ${data.indicators.macd.MACD.toFixed(4)}
+                ${data.indicators.macd.MACD > data.indicators.macd.signal ? '(صعودی)' : '(نزولی)'}
+              </div>
+              <p>خط MACD: ${data.indicators.macd.MACD.toFixed(4)}</p>
+              <p>خط سیگنال: ${data.indicators.macd.signal.toFixed(4)}</p>
+            </div>
+            
+            <!-- Stochastic -->
+            <div class="indicator-card ${stochasticClass.includes('over') ? (stochasticClass === 'oversold' ? 'buy' : 'sell') : ''}">
+              <h4>Stochastic (14,3)</h4>
+              <div class="value ${stochasticClass}">
+                K: ${data.indicators.stochastic.k.toFixed(2)}, D: ${data.indicators.stochastic.d.toFixed(2)}
+                ${data.indicators.stochastic.k < 20 ? '(اشباع فروش)' : data.indicators.stochastic.k > 80 ? '(اشباع خرید)' : ''}
+              </div>
+              <p>${getStochasticInterpretation(data.indicators.stochastic.k, data.indicators.stochastic.d)}</p>
+            </div>
+            
+            <!-- میانگین‌های متحرک -->
+            <div class="indicator-card ${data.indicators.goldenCross ? 'buy' : 'sell'}">
+              <h4>میانگین‌های متحرک</h4>
+              <div class="value" style="color: ${data.indicators.goldenCross ? '#27ae60' : '#e74c3c'};">
+                ${data.indicators.goldenCross ? 'تقاطع طلایی' : 'تقاطع مرگ'}
+              </div>
+              <p>SMA50: ${formatPrice(data.indicators.sma50)}</p>
+              <p>SMA200: ${formatPrice(data.indicators.sma200)}</p>
+              <p>قیمت ${data.indicators.priceAboveSMA50 ? 'بالای' : 'زیر'} SMA50 و ${data.indicators.priceAboveSMA200 ? 'بالای' : 'زیر'} SMA200</p>
+            </div>
+            
+            <!-- باندهای بولینگر -->
+            <div class="indicator-card">
+              <h4>باندهای بولینگر (20,2)</h4>
+              <div class="value">
+                ${formatPrice(data.indicators.bollinger.middle)}
+              </div>
+              <p>باند بالایی: ${formatPrice(data.indicators.bollinger.upper)}</p>
+              <p>باند پایینی: ${formatPrice(data.indicators.bollinger.lower)}</p>
+              <p>قیمت ${data.lastPrice > data.indicators.bollinger.upper ? 'بالای باند بالایی' : 
+                      data.lastPrice < data.indicators.bollinger.lower ? 'زیر باند پایینی' : 'بین باندها'}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- پیش‌بینی قیمت -->
+        <div class="price-prediction">
+          <h3 style="color: #3498db;">پیش‌بینی قیمت</h3>
+          <div class="prediction-item">
+            <span>هدف قیمتی کوتاه‌مدت:</span>
+            <span style="font-weight: bold; color: ${data.signal.decision === 'خرید' ? '#27ae60' : '#e74c3c'}">
+              ${formatPrice(calculatePrediction(data.lastPrice, data.signal.decision, data.resistances, data.supports))}
             </span>
           </div>
-          
-          <div class="indicator">
-            <span>MACD:</span>
-            <span style="color: ${data.indicators.macd.MACD > data.indicators.macd.signal ? '#27ae60' : '#e74c3c'}; font-weight: bold;">
-              ${data.indicators.macd.MACD.toFixed(4)}
-              ${data.indicators.macd.MACD > data.indicators.macd.signal ? '(صعودی)' : '(نزولی)'}
+          <div class="prediction-item">
+            <span>حد ضرر پیشنهادی:</span>
+            <span style="font-weight: bold; color: #e74c3c">
+              ${formatPrice(calculateStopLoss(data.lastPrice, data.signal.decision, data.supports))}
+            </span>
+          </div>
+          <div class="prediction-item" style="border-bottom: none;">
+            <span>پتانسیل سود/زیان:</span>
+            <span style="font-weight: bold; color: ${calculateProfitPotential(data.lastPrice, data.signal.decision, data.resistances, data.supports) > 0 ? '#27ae60' : '#e74c3c'}">
+              ${calculateProfitPotential(data.lastPrice, data.signal.decision, data.resistances, data.supports).toFixed(2)}%
             </span>
           </div>
         </div>
       `;
     }
-
-    // بارگذاری اولیه نمادها
-    loadSymbols();
-  </script>
-</body>
-</html>
+    
+    // توابع کمکی
+    function formatPrice(price) {
+      if (price > 1000) {
+        return price.toLocaleString('fa-IR');
+      } else if (price > 1) {
+        return price.toFixed(2).replace('.', ',');
+      } else {
+        return price.toFixed(4).replace('.', ',');
+      }
+    }
+    
+    function calculateDistance(currentPrice, levelPrice) {
+      return Math.abs(((currentPrice - levelPrice) / currentPrice) * 100).toFixed(2);
+    }
+    
+    function getRSIInterpretation(rsi) {
+      if (rsi < 30) return 'سیگنال قوی خرید - بازار احتمالاً اشباع فروش شده است';
+      if (rsi > 70) return 'سیگنال قوی فروش - بازار احتمالاً اشباع خرید شده است';
+      if (rsi < 45) return 'تمایل به فروش - ممکن است روند نزولی ادامه یابد';
+      if (rsi > 55) return 'تمایل به خرید - ممکن است روند صعودی ادامه یابد';
+      return 'خنثی - بازار در حال تعادل است';
+    }
+    
+    function getStochasticInterpretation(k, d) {
+      if (k < 20 && d < 20) return 'سیگنال قوی خرید - بازار احتمالاً اشباع فروش شده است';
+      if (k > 80 && d > 80) return 'سیگنال قوی فروش - بازار احتمالاً اشباع خرید شده است';
+      if (k > d) return 'تمایل به خرید - ممکن است روند صعودی شود';
+      if (k < d) return '
