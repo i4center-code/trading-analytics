@@ -22,19 +22,25 @@ const CRYPTO_SYMBOLS = {
   SHIB: 'شیبا اینو'
 };
 
-// تابع دریافت قیمت از API CoinGecko
+// تابع دریافت قیمت از API نوبیتکس
 async function getCryptoPrices(symbol) {
   try {
-    const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=30`,
-      { timeout: 15000 } // 15 ثانیه
-    );
+    const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}IRT`, {
+      timeout: 15000 // 15 ثانیه
+    });
 
-    if (!response.data || !response.data.prices) {
+    if (!response.data || response.data.status !== 'ok') {
       throw new Error('داده دریافتی نامعتبر است');
     }
 
-    return response.data.prices.map(item => item[1]); // فقط قیمت‌ها را برمی‌گرداند
+    // استخراج قیمت‌ها از asks و bids
+    const { asks, bids } = response.data;
+    const prices = [...asks, ...bids].map(item => parseFloat(item[0])); // فقط قیمت‌ها را برمی‌گرداند
+
+    // تبدیل قیمت‌ها از تومان به دلار (فرض نرخ ۴۰,۰۰۰ تومان)
+    const usdPrices = prices.map(price => price / 40000);
+
+    return usdPrices;
   } catch (error) {
     console.error('خطا در دریافت قیمت:', error.message);
     throw new Error('عدم اتصال به سرور قیمت‌گذاری');
