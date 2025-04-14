@@ -220,19 +220,62 @@ const CRYPTO_SYMBOLS = {
   LDOUSDT: 'لیدو/تتر',
   SNXUSDT: 'سینتتیکس/تتر'
 };
+const express = require('express');
+const axios = require('axios');
+const technicalindicators = require('technicalindicators');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// نمادهای ارز دیجیتال پشتیبانی شده
+const CRYPTO_SYMBOLS = {
+  BTC: ['BTCIRT', 'BTCUSDT'],
+  ETH: ['ETHIRT', 'ETHUSDT'],
+  LTC: ['LTCIRT', 'LTCUSDT'],
+  USDT: ['USDTIRT', 'USDTUSDT'],
+  XRP: ['XRPIRT', 'XRPUSDT'],
+  BCH: ['BCHIRT', 'BCHUSDT'],
+  BNB: ['BNBIRT', 'BNBUSDT'],
+  EOS: ['EOSIRT', 'EOSUSDT'],
+  XLM: ['XLMIRT', 'XLMUSDT'],
+  ETC: ['ETCIRT', 'ETCUSDT'],
+  TRX: ['TRXIRT', 'TRXUSDT'],
+  DOGE: ['DOGEIRT', 'DOGEUSDT'],
+  UNI: ['UNIIRT', 'UNIUSDT'],
+  DAI: ['DAIIRT', 'DAIUSDT'],
+  LINK: ['LINKIRT', 'LINKUSDT'],
+  DOT: ['DOTIRT', 'DOTUSDT'],
+  AAVE: ['AAVEIRT', 'AAVEUSDT'],
+  ADA: ['ADAIRT', 'ADAUSDT'],
+  SHIB: ['SHIBIRT', 'SHIBUSDT'],
+  FTM: ['FTMIRT', 'FTMUSDT'],
+  MATIC: ['MATICIRT', 'MATICUSDT'],
+  AXS: ['AXSIRT', 'AXSUSDT'],
+  MANA: ['MANAIRT', 'MANAUSDT'],
+  SAND: ['SANDIRT', 'SANDUSDT'],
+  AVAX: ['AVAXIRT', 'AVAXUSDT'],
+  MKR: ['MKRIRT', 'MKRUSDT'],
+  GMT: ['GMTIRT', 'GMTUSDT'],
+  USDC: ['USDCIRT', 'USDCUSDT']
+};
+
 // تابع دریافت قیمت از API نوبیتکس
 async function getCryptoPrices(symbol) {
   try {
-    const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}IRT`, {
+    const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}`, {
       timeout: 15000 // 15 ثانیه
     });
-    
+
     if (!response.data || response.data.status !== 'ok') {
       throw new Error('داده دریافتی نامعتبر است');
     }
 
     // استخراج قیمت‌ها از asks و bids
-    const { asks, bids } = response.data;
+    const { asks, bids } = response.data[symbol];
     const prices = [...asks, ...bids].map(item => parseFloat(item[0])); // فقط قیمت‌ها را برمی‌گرداند
 
     return prices;
@@ -245,7 +288,7 @@ async function getCryptoPrices(symbol) {
 // محاسبه تحلیل تکنیکال
 function calculateTechnicalAnalysis(prices) {
   const lastPrice = prices[prices.length - 1];
-  
+
   // محاسبه RSI
   const rsi = technicalindicators.rsi({
     values: prices,
@@ -258,7 +301,7 @@ function calculateTechnicalAnalysis(prices) {
     fastPeriod: 12,
     slowPeriod: 26,
     signalPeriod: 9
-  }).slice(-1)[0] || {MACD: 0, signal: 0};
+  }).slice(-1)[0] || { MACD: 0, signal: 0 };
 
   // تشخیص سیگنال
   let signal = 'خنثی';
@@ -274,33 +317,45 @@ function calculateTechnicalAnalysis(prices) {
   };
 }
 
-// مسیرهای API
-app.get('/api/symbols', (req, res) => {
-  res.json(CRYPTO_SYMBOLS);
+// مسیر دریافت لیست نمادهای مرتبط
+app.get('/api/symbols/:baseSymbol', (req, res) => {
+  const baseSymbol = req.params.baseSymbol.toUpperCase();
+
+  if (!CRYPTO_SYMBOLS[baseSymbol]) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'این نماد پایه پشتیبانی نمی‌شود'
+    });
+  }
+
+  res.json({
+    status: 'success',
+    symbols: CRYPTO_SYMBOLS[baseSymbol]
+  });
 });
 
+// مسیر تحلیل نماد
 app.get('/api/analyze/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-    
-    if (!CRYPTO_SYMBOLS[symbol]) {
+
+    if (!Object.values(CRYPTO_SYMBOLS).flat().includes(symbol)) {
       return res.status(404).json({
         status: 'error',
-        message: 'این ارز دیجیتال پشتیبانی نمی‌شود'
+        message: 'این نماد پشتیبانی نمی‌شود'
       });
     }
 
     const prices = await getCryptoPrices(symbol);
     const analysis = calculateTechnicalAnalysis(prices);
-    
+
     res.json({
       status: 'success',
       symbol,
-      name: CRYPTO_SYMBOLS[symbol],
       ...analysis,
       lastUpdate: new Date()
     });
-    
+
   } catch (error) {
     res.status(500).json({
       status: 'error',
