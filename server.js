@@ -26,7 +26,7 @@ const CRYPTO_SYMBOLS = {
 // تابع دریافت قیمت از API نوبیتکس
 async function getCryptoPrices(symbol) {
   try {
-    const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}IRT`, {
+    const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}IRR`, {
       timeout: 15000 // 15 ثانیه
     });
     
