@@ -100,7 +100,7 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       status: 'success',
       symbol,
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'), // فرمت عدد به فارسی بدون واحد پولی
+      lastPrice: analysis.lastPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '٬'), // فرمت عدد به فارسی بدون واحد پولی
       rsi: analysis.rsi,
       macd: analysis.macd,
       signal: analysis.signal,
