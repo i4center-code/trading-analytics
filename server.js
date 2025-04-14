@@ -48,7 +48,7 @@ async function getCryptoPrices(symbol) {
 // محاسبه تحلیل تکنیکال
 function calculateTechnicalAnalysis(prices) {
   const lastPrice = prices[prices.length - 1];
-
+  
   // محاسبه RSI
   const rsi = technicalindicators.rsi({
     values: prices,
@@ -56,100 +56,24 @@ function calculateTechnicalAnalysis(prices) {
   }).slice(-1)[0] || 50;
 
   // محاسبه MACD
-  const macdResult = technicalindicators.macd({
+  const macd = technicalindicators.macd({
     values: prices,
     fastPeriod: 12,
     slowPeriod: 26,
     signalPeriod: 9
-  }).slice(-1)[0] || { MACD: 0, signal: 0 };
+  }).slice(-1)[0] || {MACD: 0, signal: 0};
 
-  // محاسبه Stochastic
-  const stochastic = technicalindicators.stochastic({
-    high: prices.map(() => Math.max(...prices)),
-    low: prices.map(() => Math.min(...prices)),
-    close: prices,
-    period: 14,
-    signalPeriod: 3
-  }).slice(-1)[0] || { k: 50, d: 50 };
-
-  // محاسبه Bollinger Bands
-  const bollinger = technicalindicators.bollingerBands({
-    values: prices,
-    period: 20,
-    stdDev: 2
-  }).slice(-1)[0] || { upper: 0, middle: 0, lower: 0 };
-
-  // محاسبه EMA (Exponential Moving Average)
-  const ema = technicalindicators.ema({
-    values: prices,
-    period: 14
-  }).slice(-1)[0] || 0;
-
-  // محاسبه SMA (Simple Moving Average)
-  const sma = technicalindicators.sma({
-    values: prices,
-    period: 14
-  }).slice(-1)[0] || 0;
-
-  // محاسبه سطوح مقاومت و حمایت
-  const resistance1 = Math.max(...prices) * 1.01; // 1% بالاتر از بیشترین قیمت
-  const resistance2 = Math.max(...prices) * 1.02; // 2% بالاتر از بیشترین قیمت
-  const support1 = Math.min(...prices) * 0.99; // 1% پایین‌تر از کمترین قیمت
-  const support2 = Math.min(...prices) * 0.98; // 2% پایین‌تر از کمترین قیمت
-
-  // محاسبه درصد خریدار و فروشنده
-  let buyPercentage = 0;
-  let sellPercentage = 0;
-
-  if (rsi < 30 && macdResult.MACD > macdResult.signal) {
-    buyPercentage += 30;
-  } else if (rsi > 70 && macdResult.MACD < macdResult.signal) {
-    sellPercentage += 30;
-  }
-
-  if (stochastic.k < 20 && stochastic.d < 20) {
-    buyPercentage += 20;
-  } else if (stochastic.k > 80 && stochastic.d > 80) {
-    sellPercentage += 20;
-  }
-
-  if (lastPrice > bollinger.upper) {
-    sellPercentage += 20;
-  } else if (lastPrice < bollinger.lower) {
-    buyPercentage += 20;
-  }
-
-  if (lastPrice > ema) {
-    buyPercentage += 15;
-  } else {
-    sellPercentage += 15;
-  }
-
-  if (lastPrice > sma) {
-    buyPercentage += 15;
-  } else {
-    sellPercentage += 15;
-  }
-
-  // تنظیم درصد‌ها به 100
-  const totalPercentage = buyPercentage + sellPercentage;
-  buyPercentage = (buyPercentage / totalPercentage) * 100;
-  sellPercentage = (sellPercentage / totalPercentage) * 100;
+  // تشخیص سیگنال
+  let signal = 'خنثی';
+  if (rsi < 30 && macd.MACD > macd.signal) signal = 'خرید';
+  if (rsi > 70 && macd.MACD < macd.signal) signal = 'فروش';
 
   return {
     lastPrice,
     rsi,
-    macd: macdResult,
-    stochastic,
-    bollinger,
-    ema,
-    sma,
-    resistance1,
-    resistance2,
-    support1,
-    support2,
-    buyPercentage,
-    sellPercentage
+    macd,
+    signal,
+    trend: lastPrice > prices[prices.length - 2] ? 'صعودی' : 'نزولی'
   };
 }
 
@@ -176,21 +100,11 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       status: 'success',
       symbol,
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
-      indicators: {
-        rsi: analysis.rsi,
-        macd: analysis.macd,
-        stochastic: analysis.stochastic,
-        bollinger: analysis.bollinger,
-        ema: analysis.ema,
-        sma: analysis.sma
-      },
-      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
-      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
-      support1: analysis.support1.toLocaleString('fa-IR'),
-      support2: analysis.support2.toLocaleString('fa-IR'),
-      buyPercentage: analysis.buyPercentage.toFixed(2),
-      sellPercentage: analysis.sellPercentage.toFixed(2),
+      lastPrice: analysis.lastPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '٬'), // فرمت عدد به فارسی بدون واحد پولی
+      rsi: analysis.rsi,
+      macd: analysis.macd,
+      signal: analysis.signal,
+      trend: analysis.trend,
       lastUpdate: new Date()
     });
     
