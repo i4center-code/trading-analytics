@@ -14,8 +14,8 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #121212, #1e1e1e); /* زمینه گرادیان تیره */
-      color: #e0e0e0; /* متن روشن */
+      background: linear-gradient(135deg, #121212, #1e1e1e);
+      color: #e0e0e0;
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
@@ -38,11 +38,9 @@
 
     .container {
       flex: 1;
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 25px;
-      background: #2c2c2c; /* زمینه داخلی تیره */
-      border-radius: 15px;
+      width: 100%;
+      padding: 20px;
+      background: #2c2c2c;
       box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
     }
 
@@ -68,7 +66,7 @@
     }
 
     #analyze-btn {
-      background: linear-gradient(135deg, #3498db, #2980b9); /* گرادیان آبی */
+      background: linear-gradient(135deg, #3498db, #2980b9);
       color: white;
       border: none;
       padding: 12px 25px;
@@ -76,13 +74,13 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(52, 152, 219, 0.5);
       transition: transform 0.2s ease;
     }
 
     #analyze-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 3px 5px 8px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(52, 152, 219, 0.7);
     }
 
     .result-card {
@@ -104,7 +102,7 @@
     .price-description {
       font-size: 18px;
       text-align: center;
-      color: #27ae60; /* رنگ سبز برای "قیمت به ریال" */
+      color: #27ae60;
       margin-top: 10px;
     }
 
@@ -113,7 +111,7 @@
       padding: 10px;
       background: #2c2c2c;
       border-radius: 5px;
-      text-align: left; /* چپ‌چین برای تحلیل تکنیکال */
+      text-align: left;
     }
 
     .bar-chart {
@@ -135,64 +133,61 @@
       height: 30px;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       font-size: 14px;
       color: white;
-      padding-left: 10px;
       transition: width 0.5s ease;
     }
 
     .buy-bar {
-      background: linear-gradient(135deg, #27ae60, #2ecc71); /* گرادیان سبز */
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
     }
 
     .sell-bar {
-      background: linear-gradient(135deg, #e74c3c, #c0392b); /* گرادیان قرمز */
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
     }
 
     .resistance-support {
       margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .support-box, .resistance-box {
       padding: 15px;
-      background: #333;
       border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); /* سایه و انعکاس نور */
+      box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
     }
 
-    .resistance {
-      color: #e74c3c;
-      margin-bottom: 5px;
+    .support-box {
+      background: #27ae60;
+      box-shadow: 3px 0 5px #1C896C;
     }
 
-    .support {
-      color: #27ae60;
-    }
-
-    .error {
-      color: #e74c3c;
-      text-align: center;
-      padding: 20px;
-      background-color: rgba(231, 76, 60, 0.1);
-      border-radius: 8px;
-    }
-
-    .retry-btn {
-      margin-top: 10px;
-      padding: 8px 15px;
+    .resistance-box {
       background: #e74c3c;
+      box-shadow: 3px 0 5px #C0392B;
+    }
+
+    .chart-button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #3498db, #2980b9);
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      font-size: 16px;
+      box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(52, 152, 219, 0.5);
       transition: transform 0.2s ease;
     }
 
-    .retry-btn:hover {
+    .chart-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 3px 5px 8px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(52, 152, 219, 0.7);
     }
 
-    /* Responsive Design */
     @media (max-width: 768px) {
       .input-group {
         flex-direction: column;
@@ -311,14 +306,19 @@
             </div>
           </div>
           <div class="resistance-support">
-            <p class="resistance"><strong>مقاومت 1:</strong> ${data.resistance1}</p>
-            <p class="resistance"><strong>مقاومت 2:</strong> ${data.resistance2}</p>
-            <p class="support"><strong>حمایت 1:</strong> ${data.support1}</p>
-            <p class="support"><strong>حمایت 2:</strong> ${data.support2}</p>
+            <div class="resistance-box">
+              <p class="resistance">مقاومت 1: ${data.resistance1}</p>
+              <p class="resistance">مقاومت 2: ${data.resistance2}</p>
+            </div>
+            <div class="support-box">
+              <p class="support">حمایت 1: ${data.support1}</p>
+              <p class="support">حمایت 2: ${data.support2}</p>
+            </div>
           </div>
-          <p style="text-align: center; color: #7f8c8d;">
+          <p style="text-align: center; color: #7f8c8d; margin-top: 15px;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
           </p>
+          <button class="chart-button">چارت تحلیل</button>
         </div>
       `;
     }
