@@ -268,7 +268,7 @@
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="loading">
-          <p style="font-size: 12px;">در حال دریافت داده‌های ${symbol} از سرور...</p>
+          <p style="font-size: 12px;">در حال دریافت داده‌های ${symbol}  از سرور ایران افیکس...</p>
         </div>
       `;
       
@@ -292,9 +292,9 @@
 
     function determineSignal(buyPercentage, sellPercentage) {
       if (buyPercentage > 60) {
-        return { text: 'سیگنال: خرید', className: 'buy' };
+        return { text: 'سیگنال: پیشنهاد خرید', className: 'buy' };
       } else if (sellPercentage > 60) {
-        return { text: 'سیگنال: فروش', className: 'sell' };
+        return { text: 'سیگنال: پیشنهاد فروش', className: 'sell' };
       } else {
         return { text: 'سیگنال: بازار خنثی هست، صبر کنید', className: 'neutral' };
       }
@@ -339,12 +339,12 @@
           </div>
           <div class="resistance-support">
             <div class="resistance-box">
-              <p>مقاومت 1: ${data.resistance1}</p>
-              <p>مقاومت 2: ${data.resistance2}</p>
+              <p>مقاومت ۱: ${data.resistance1}</p>
+              <p>مقاومت ۲: ${data.resistance2}</p>
             </div>
             <div class="support-box">
-              <p>حمایت 1: ${data.support1}</p>
-              <p>حمایت 2: ${data.support2}</p>
+              <p>حمایت ۱: ${data.support1}</p>
+              <p>حمایت ۲: ${data.support2}</p>
             </div>
           </div>
           <p style="text-align: center; color: #7f8c8d; font-size: 12px; margin-top: 15px;">
