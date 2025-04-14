@@ -5,47 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تحلیلگر ارز دیجیتال ایران افیکس</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #121212; /* زمینه تیره */
-      color: #e0e0e0; /* متن روشن */
+    /* Reset Styles */
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #121212, #1e1e1e); /* زمینه گرادیان تیره */
+      color: #e0e0e0; /* متن روشن */
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
     .header {
-      background-color: #1e1e1e; /* نوار بالایی تیره‌تر */
+      background-color: #1e1e1e;
       color: white;
       padding: 15px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
+
     .logo {
       height: 50px;
     }
+
     .container {
+      flex: 1;
       max-width: 900px;
       margin: 30px auto;
       padding: 25px;
-      background: #1e1e1e; /* زمینه داخلی تیره */
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* سایه تیره‌تر */
+      background: #2c2c2c; /* زمینه داخلی تیره */
+      border-radius: 15px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
     }
+
     .input-group {
       display: flex;
       margin-bottom: 20px;
     }
+
     #symbol-input {
       flex: 1;
       padding: 12px 15px;
-      border: 1px solid #333; /* خط تیره برای ورودی */
+      border: 2px solid #333;
       border-radius: 8px;
       font-size: 16px;
-      background-color: #2c2c2c; /* زمینه تیره برای ورودی */
-      color: #e0e0e0; /* متن روشن */
+      background-color: #333;
+      color: #e0e0e0;
+      transition: border-color 0.3s ease;
     }
+
+    #symbol-input:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
     #analyze-btn {
-      background-color: #3498db; /* رنگ آبی برای دکمه */
+      background: linear-gradient(135deg, #3498db, #2980b9); /* گرادیان آبی */
       color: white;
       border: none;
       padding: 12px 25px;
@@ -53,79 +76,139 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease;
     }
+
+    #analyze-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+    }
+
     .result-card {
-      background: #2c2c2c; /* زمینه تیره برای نتایج */
-      border-radius: 8px;
+      background: #333;
+      border-radius: 10px;
       padding: 20px;
       margin-top: 20px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* سایه تیره‌تر */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
+
     .price {
       font-size: 24px;
       font-weight: bold;
       text-align: center;
       margin: 15px 0;
-      color: #3498db; /* رنگ آبی برای قیمت */
+      color: #3498db;
     }
+
     .price-description {
       font-size: 14px;
       text-align: center;
-      color: #7f8c8d; /* رنگ خاکستری برای توضیح */
+      color: #7f8c8d;
       margin-top: 5px;
     }
+
     .indicator {
       margin: 10px 0;
       padding: 10px;
-      background: #1e1e1e; /* زمینه تیره برای اندیکاتورها */
+      background: #2c2c2c;
       border-radius: 5px;
     }
+
     .bar-chart {
       display: flex;
       justify-content: space-between;
       margin-top: 20px;
     }
-    .bar {
+
+    .bar-container {
       width: 45%;
-      height: 20px;
-      border-radius: 5px;
-      text-align: center;
-      line-height: 20px;
+      background: #444;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .bar {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
       color: white;
+      transition: width 0.5s ease;
     }
+
     .buy-bar {
-      background-color: #27ae60; /* رنگ سبز برای خریدار */
+      background: linear-gradient(135deg, #27ae60, #2ecc71); /* گرادیان سبز */
     }
+
     .sell-bar {
-      background-color: #e74c3c; /* رنگ قرمز برای فروشنده */
+      background: linear-gradient(135deg, #e74c3c, #c0392b); /* گرادیان قرمز */
     }
+
     .resistance-support {
       margin-top: 15px;
       font-size: 14px;
-      color: #7f8c8d; /* رنگ خاکستری برای مقاومت و حمایت */
+      color: #7f8c8d;
     }
+
     .resistance {
-      color: #e74c3c; /* رنگ قرمز برای مقاومت */
+      color: #e74c3c;
     }
+
     .support {
-      color: #27ae60; /* رنگ سبز برای حمایت */
+      color: #27ae60;
     }
+
     .error {
-      color: #e74c3c; /* متن خطا قرمز */
+      color: #e74c3c;
       text-align: center;
       padding: 20px;
-      background-color: rgba(231, 76, 60, 0.1); /* زمینه شفاف قرمز برای خطا */
+      background-color: rgba(231, 76, 60, 0.1);
       border-radius: 8px;
     }
+
     .retry-btn {
       margin-top: 10px;
       padding: 8px 15px;
-      background: #e74c3c; /* رنگ قرمز برای دکمه تلاش مجدد */
+      background: #e74c3c;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease;
+    }
+
+    .retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .input-group {
+        flex-direction: column;
+      }
+
+      #symbol-input {
+        margin-bottom: 10px;
+      }
+
+      #analyze-btn {
+        width: 100%;
+        margin-right: 0;
+      }
+
+      .bar-chart {
+        flex-direction: column;
+      }
+
+      .bar-container {
+        width: 100%;
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
@@ -197,6 +280,9 @@
     });
 
     function showResult(data) {
+      const buyPercentage = parseFloat(data.buyPercentage);
+      const sellPercentage = parseFloat(data.sellPercentage);
+
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="result-card">
@@ -222,8 +308,16 @@
             <p class="support">حمایت 2: ${data.support2}</p>
           </div>
           <div class="bar-chart">
-            <div class="bar buy-bar">${data.buyPercentage}% خریدار</div>
-            <div class="bar sell-bar">${data.sellPercentage}% فروشنده</div>
+            <div class="bar-container">
+              <div class="bar buy-bar" style="width: ${buyPercentage}%;">
+                ${buyPercentage}% خریدار
+              </div>
+            </div>
+            <div class="bar-container">
+              <div class="bar sell-bar" style="width: ${sellPercentage}%;">
+                ${sellPercentage}% فروشنده
+              </div>
+            </div>
           </div>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
