@@ -99,15 +99,18 @@
       color: #3498db;
     }
 
+    .signal-container {
+      text-align: center; /* Center the signal box horizontally */
+      margin-top: 10px;
+    }
+
     .signal-box {
       font-size: 12px; /* Font size adjusted */
       font-weight: bold;
-      text-align: center;
-      margin: 10px auto; /* Centered horizontally */
+      display: inline-block; /* Make the box inline-block for centering */
       padding: 8px 15px;
       border-radius: 8px;
       box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
-      display: inline-block;
       border: 2px solid transparent; /* Border added */
       background: transparent; /* Background removed */
     }
@@ -309,8 +312,10 @@
           <div class="price">
             قیمت فعلی: ${formatPrice(data.lastPrice)}
           </div>
-          <div class="signal-box ${signal.className}">
-            ${signal.text}
+          <div class="signal-container">
+            <div class="signal-box ${signal.className}">
+              ${signal.text}
+            </div>
           </div>
           <div class="indicator">
             <h3 style="font-size: 12px;">تحلیل تکنیکال</h3>
