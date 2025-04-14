@@ -72,13 +72,6 @@ function calculateTechnicalAnalysis(prices) {
     signalPeriod: 3
   }).slice(-1)[0] || { k: 50, d: 50 };
 
-  // محاسبه Bollinger Bands
-  const bollinger = technicalindicators.bollingerBands({
-    values: prices,
-    period: 20,
-    stdDev: 2
-  }).slice(-1)[0] || { upper: 0, middle: 0, lower: 0 };
-
   // محاسبه EMA (Exponential Moving Average)
   const ema = technicalindicators.ema({
     values: prices,
@@ -113,22 +106,16 @@ function calculateTechnicalAnalysis(prices) {
     sellPercentage += 20;
   }
 
-  if (lastPrice > bollinger.upper) {
-    sellPercentage += 20;
-  } else if (lastPrice < bollinger.lower) {
-    buyPercentage += 20;
-  }
-
   if (lastPrice > ema) {
-    buyPercentage += 15;
+    buyPercentage += 25;
   } else {
-    sellPercentage += 15;
+    sellPercentage += 25;
   }
 
   if (lastPrice > sma) {
-    buyPercentage += 15;
+    buyPercentage += 25;
   } else {
-    sellPercentage += 15;
+    sellPercentage += 25;
   }
 
   // تنظیم درصد‌ها به 100
@@ -141,7 +128,6 @@ function calculateTechnicalAnalysis(prices) {
     rsi,
     macd: macdResult,
     stochastic,
-    bollinger,
     ema,
     sma,
     resistance1,
@@ -181,7 +167,6 @@ app.get('/api/analyze/:symbol', async (req, res) => {
         rsi: analysis.rsi,
         macd: analysis.macd,
         stochastic: analysis.stochastic,
-        bollinger: analysis.bollinger,
         ema: analysis.ema,
         sma: analysis.sma
       },
