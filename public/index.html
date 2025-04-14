@@ -99,11 +99,30 @@
       color: #3498db;
     }
 
-    .price-description {
+    .signal-box {
       font-size: 18px;
+      font-weight: bold;
       text-align: center;
-      color: #27ae60;
       margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+      display: inline-block;
+    }
+
+    .signal-box.buy {
+      background: #27ae60;
+      color: white;
+    }
+
+    .signal-box.sell {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .signal-box.neutral {
+      background: #f1c40f;
+      color: white;
     }
 
     .indicator {
@@ -112,22 +131,6 @@
       background: #2c2c2c;
       border-radius: 5px;
       text-align: left;
-    }
-
-    .signal {
-      font-size: 18px;
-      font-weight: bold;
-      text-align: center;
-      margin-top: 15px;
-      color: #e74c3c;
-    }
-
-    .signal.buy {
-      color: #27ae60;
-    }
-
-    .signal.neutral {
-      color: #f1c40f;
     }
 
     .bar-chart {
@@ -186,8 +189,14 @@
       background: transparent;
     }
 
-    .chart-button {
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
       margin-top: 20px;
+    }
+
+    .action-button {
       padding: 12px 25px;
       background: linear-gradient(135deg, #3498db, #2980b9);
       color: white;
@@ -197,12 +206,9 @@
       font-size: 16px;
       box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(52, 152, 219, 0.5);
       transition: transform 0.2s ease;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
     }
 
-    .chart-button:hover {
+    .action-button:hover {
       transform: translateY(-2px);
       box-shadow: 3px 5px 8px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(52, 152, 219, 0.7);
     }
@@ -316,8 +322,8 @@
           <div class="price">
             قیمت فعلی: ${formatPrice(data.lastPrice)}
           </div>
-          <div class="price-description">
-            قیمت به ریال
+          <div class="signal-box ${signal.className}">
+            ${signal.text}
           </div>
           <div class="indicator">
             <h3>تحلیل تکنیکال</h3>
@@ -326,9 +332,6 @@
             <p><strong>Stochastic (K/D):</strong> ${data.indicators.stochastic.k.toFixed(2)} / ${data.indicators.stochastic.d.toFixed(2)}</p>
             <p><strong>EMA:</strong> ${data.indicators.ema.toFixed(2)}</p>
             <p><strong>SMA:</strong> ${data.indicators.sma.toFixed(2)}</p>
-          </div>
-          <div class="signal ${signal.className}">
-            ${signal.text}
           </div>
           <div class="bar-chart">
             <div class="bar-container">
@@ -355,7 +358,10 @@
           <p style="text-align: center; color: #7f8c8d; margin-top: 15px;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
           </p>
-          <a href="#" class="chart-button">چارت آنلاین</a>
+          <div class="action-buttons">
+            <a href="#" class="action-button">چارت آنلاین</a>
+            <a href="#" class="action-button">دریافت میکوبات</a>
+          </div>
         </div>
       `;
     }
