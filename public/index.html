@@ -7,13 +7,13 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #121212; /* زمینه تیره */
-      color: #e0e0e0; /* متن روشن */
+      background-color: #121212;
+      color: #e0e0e0;
       margin: 0;
       padding: 0;
     }
     .header {
-      background-color: #1e1e1e; /* نوار بالایی تیره‌تر */
+      background-color: #1e1e1e;
       color: white;
       padding: 15px 30px;
       display: flex;
@@ -27,9 +27,9 @@
       max-width: 900px;
       margin: 30px auto;
       padding: 25px;
-      background: #1e1e1e; /* زمینه داخلی تیره */
+      background: #1e1e1e;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* سایه تیره‌تر */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
     .input-group {
       display: flex;
@@ -38,14 +38,14 @@
     #symbol-input {
       flex: 1;
       padding: 12px 15px;
-      border: 1px solid #333; /* خط تیره برای ورودی */
+      border: 1px solid #333;
       border-radius: 8px;
       font-size: 16px;
-      background-color: #2c2c2c; /* زمینه تیره برای ورودی */
-      color: #e0e0e0; /* متن روشن */
+      background-color: #2c2c2c;
+      color: #e0e0e0;
     }
     #analyze-btn {
-      background-color: #3498db; /* رنگ آبی برای دکمه */
+      background-color: #3498db;
       color: white;
       border: none;
       padding: 12px 25px;
@@ -55,70 +55,61 @@
       font-size: 16px;
     }
     .result-card {
-      background: #2c2c2c; /* زمینه تیره برای نتایج */
+      background: #2c2c2c;
       border-radius: 8px;
       padding: 20px;
       margin-top: 20px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* سایه تیره‌تر */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
     .price {
       font-size: 24px;
       font-weight: bold;
       text-align: center;
       margin: 15px 0;
-      color: #3498db; /* رنگ آبی برای قیمت */
+      color: #3498db;
     }
     .price-description {
       font-size: 14px;
       text-align: center;
-      color: #7f8c8d; /* رنگ خاکستری برای توضیح */
+      color: #7f8c8d;
       margin-top: 5px;
-    }
-    .signal {
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 15px 0;
-    }
-    .buy {
-      background-color: rgba(46, 204, 113, 0.2); /* سبز شفاف برای خرید */
-      color: #27ae60;
-    }
-    .sell {
-      background-color: rgba(231, 76, 60, 0.2); /* قرمز شفاف برای فروش */
-      color: #e74c3c;
-    }
-    .neutral {
-      background-color: rgba(52, 152, 219, 0.2); /* آبی شفاف برای خنثی */
-      color: #2980b9;
     }
     .indicator {
       margin: 10px 0;
       padding: 10px;
-      background: #1e1e1e; /* زمینه تیره برای اندیکاتورها */
+      background: #1e1e1e;
       border-radius: 5px;
     }
-    .loading {
-      text-align: center;
-      padding: 30px;
+    .bar-chart {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
     }
-    .error {
-      color: #e74c3c; /* متن خطا قرمز */
+    .bar {
+      width: 45%;
+      height: 20px;
+      border-radius: 5px;
       text-align: center;
-      padding: 20px;
-      background-color: rgba(231, 76, 60, 0.1); /* زمینه شفاف قرمز برای خطا */
-      border-radius: 8px;
-    }
-    .retry-btn {
-      margin-top: 10px;
-      padding: 8px 15px;
-      background: #e74c3c; /* رنگ قرمز برای دکمه تلاش مجدد */
+      line-height: 20px;
+      font-size: 14px;
       color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    }
+    .buy-bar {
+      background-color: #27ae60;
+    }
+    .sell-bar {
+      background-color: #e74c3c;
+    }
+    .resistance-support {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    .resistance {
+      color: #e74c3c;
+    }
+    .support {
+      color: #27ae60;
     }
   </style>
 </head>
@@ -190,31 +181,38 @@
     });
 
     function showResult(data) {
-      const signalClass = data.signal === 'خرید' ? 'buy' : 
-                        data.signal === 'فروش' ? 'sell' : 'neutral';
-      
-      document.getElementById('analysis-result').innerHTML = `
+      const resultDiv = document.getElementById('analysis-result');
+      resultDiv.innerHTML = `
         <div class="result-card">
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
           <div class="price">
-            قیمت فعلی: ${formatPrice(data.lastPrice)}
+            قیمت فعلی: ${data.lastPrice}
           </div>
           <div class="price-description">
             قیمت به ریال
           </div>
-          <div class="signal ${signalClass}">
-            سیگنال: ${data.signal}
+          <div class="indicator">
+            <h3>تحلیل تکنیکال</h3>
+            <p>RSI: ${data.indicators.rsi.toFixed(2)}</p>
+            <p>MACD: ${data.indicators.macd.MACD.toFixed(4)} | Signal: ${data.indicators.macd.signal.toFixed(4)}</p>
+            <p>Stochastic (K/D): ${data.indicators.stochastic.k.toFixed(2)} / ${data.indicators.stochastic.d.toFixed(2)}</p>
+            <p>Bollinger Bands: Upper=${data.indicators.bollinger.upper.toFixed(2)}, Middle=${data.indicators.bollinger.middle.toFixed(2)}, Lower=${data.indicators.bollinger.lower.toFixed(2)}</p>
+            <p>EMA: ${data.indicators.ema.toFixed(2)}</p>
+            <p>SMA: ${data.indicators.sma.toFixed(2)}</p>
+          </div>
+          <div class="resistance-support">
+            <p class="resistance">مقاومت 1: ${data.resistance1}</p>
+            <p class="resistance">مقاومت 2: ${data.resistance2}</p>
+            <p class="support">حمایت 1: ${data.support1}</p>
+            <p class="support">حمایت 2: ${data.support2}</p>
+          </div>
+          <div class="bar-chart">
+            <div class="bar buy-bar">${data.buyPercentage}% خریدار</div>
+            <div class="bar sell-bar">${data.sellPercentage}% فروشنده</div>
           </div>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
           </p>
-          
-          <div class="indicator">
-            <h3>تحلیل تکنیکال</h3>
-            <p>روند: ${data.trend}</p>
-            <p>شاخص RSI: ${data.rsi.toFixed(2)}</p>
-            <p>شاخص MACD: ${data.macd.MACD.toFixed(4)}</p>
-          </div>
         </div>
       `;
     }
@@ -228,10 +226,6 @@
           <button class="retry-btn" onclick="location.reload()">تلاش مجدد</button>
         </div>
       `;
-    }
-
-    function formatPrice(price) {
-      return price.toLocaleString('fa-IR'); // فقط عدد فرمت‌بندی‌شده به فارسی
     }
 
     loadSymbols();
