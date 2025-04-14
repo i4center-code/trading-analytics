@@ -68,6 +68,12 @@
       margin: 15px 0;
       color: #3498db; /* رنگ آبی برای قیمت */
     }
+    .price-description {
+      font-size: 14px;
+      text-align: center;
+      color: #7f8c8d; /* رنگ خاکستری برای توضیح */
+      margin-top: 5px;
+    }
     .signal {
       text-align: center;
       font-size: 20px;
@@ -192,6 +198,9 @@
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
           <div class="price">
             قیمت فعلی: ${formatPrice(data.lastPrice)}
+          </div>
+          <div class="price-description">
+            قیمت به ریال
           </div>
           <div class="signal ${signalClass}">
             سیگنال: ${data.signal}
