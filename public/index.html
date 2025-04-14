@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تحلیلگر ایران افیکس</title>
+  <title>تحلیلگر ارز دیجیتال ایران افیکس</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -64,6 +64,26 @@
       text-align: center;
       margin: 15px 0;
     }
+    .signal {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .buy {
+      background-color: rgba(46, 204, 113, 0.2);
+      color: #27ae60;
+    }
+    .sell {
+      background-color: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+    }
+    .neutral {
+      background-color: rgba(52, 152, 219, 0.2);
+      color: #2980b9;
+    }
     .indicator {
       margin: 10px 0;
       padding: 10px;
@@ -94,19 +114,19 @@
 </head>
 <body>
   <div class="header">
-    <h1>تحلیلگر ایران افیکس</h1>
+    <h1>تحلیلگر ارز دیجیتال ایران افیکس</h1>
     <img src="https://app.puzzley.net/uploads/user/5VoB/app/iconiranfx.png" alt="لوگوی ایران افیکس" class="logo">
   </div>
 
   <div class="container">
     <div class="input-group">
-      <input type="text" id="symbol-input" placeholder="مثلاً BTC, ETH, EURUSD" list="symbols-list">
+      <input type="text" id="symbol-input" placeholder="مثلاً BTC, ETH, BNB" list="symbols-list">
       <datalist id="symbols-list"></datalist>
       <button id="analyze-btn">تحلیل کن</button>
     </div>
     
     <div id="analysis-result">
-      <p style="text-align: center; color: #666;">نماد مورد نظر را انتخاب کنید</p>
+      <p style="text-align: center; color: #666;">ارز دیجیتال مورد نظر را انتخاب کنید</p>
     </div>
   </div>
 
@@ -120,10 +140,10 @@
         const datalist = document.getElementById('symbols-list');
         datalist.innerHTML = '';
         
-        for (const [symbol, data] of Object.entries(symbols)) {
+        for (const [symbol, name] of Object.entries(symbols)) {
           const option = document.createElement('option');
           option.value = symbol;
-          option.textContent = `${symbol} (${data.name})`;
+          option.textContent = `${symbol} (${name})`;
           datalist.appendChild(option);
         }
       } catch (error) {
@@ -136,14 +156,14 @@
       const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
       
       if (!symbol) {
-        alert('لطفاً نماد مورد نظر را وارد کنید');
+        alert('لطفاً نماد ارز دیجیتال را وارد کنید');
         return;
       }
 
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="loading">
-          <p>در حال اتصال به سرور ایران افیکس ...</p>
+          <p>در حال دریافت داده‌های ${symbol} از سرور...</p>
         </div>
       `;
       
@@ -163,20 +183,27 @@
 
     // نمایش نتیجه
     function showResult(data) {
+      const signalClass = data.signal === 'خرید' ? 'buy' : 
+                        data.signal === 'فروش' ? 'sell' : 'neutral';
+      
       document.getElementById('analysis-result').innerHTML = `
         <div class="result-card">
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
           <div class="price">
-            قیمت فعلی: ${formatPrice(data.lastPrice)}
+            قیمت فعلی: ${formatPrice(data.lastPrice)} دلار
+          </div>
+          <div class="signal ${signalClass}">
+            سیگنال: ${data.signal}
           </div>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
           </p>
           
           <div class="indicator">
-            <h3>اندیکاتورها</h3>
-            <p>RSI (14): ${data.indicators.rsi.toFixed(2)}</p>
-            <p>MACD: ${data.indicators.macd.MACD.toFixed(4)}</p>
+            <h3>تحلیل تکنیکال</h3>
+            <p>روند: ${data.trend}</p>
+            <p>شاخص RSI: ${data.rsi.toFixed(2)}</p>
+            <p>شاخص MACD: ${data.macd.MACD.toFixed(4)}</p>
           </div>
         </div>
       `;
@@ -186,6 +213,7 @@
     function showError(error) {
       document.getElementById('analysis-result').innerHTML = `
         <div class="error">
+          <p>عدم اتصال به سرور ایران افیکس</p>
           <p>${error.message}</p>
           <p>لطفاً بعداً تلاش کنید</p>
           <button class="retry-btn" onclick="location.reload()">تلاش مجدد</button>
@@ -195,13 +223,7 @@
 
     // فرمت نمایش قیمت
     function formatPrice(price) {
-      if (price >= 1000) {
-        return price.toLocaleString('fa-IR');
-      } else if (price >= 1) {
-        return price.toFixed(2).replace('.', ',');
-      } else {
-        return price.toFixed(6).replace('.', ',');
-      }
+      return price.toLocaleString('fa-IR');
     }
 
     // شروع برنامه
