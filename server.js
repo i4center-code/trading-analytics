@@ -56,15 +56,15 @@ function calculateTechnicalAnalysis(prices) {
   const lastPrice = prices[prices.length - 1];
 
   // محاسبه اندیکاتورها
-  const rsi = technicalindicators.rsi({ values: prices, period: 14 }).slice(-1)[0] || 0;
+  const rsi = parseFloat((technicalindicators.rsi({ values: prices, period: 14 }).slice(-1)[0] || 0).toFixed(2));
   const macdResult = technicalindicators.macd({
     values: prices,
     fastPeriod: 12,
     slowPeriod: 26,
     signalPeriod: 9
   }).slice(-1)[0] || { MACD: 0, signal: 0 };
-  const sma = technicalindicators.sma({ period: 20, values: prices }).slice(-1)[0] || 0;
-  const ema = technicalindicators.ema({ period: 20, values: prices }).slice(-1)[0] || 0;
+  const sma = parseFloat((technicalindicators.sma({ period: 20, values: prices }).slice(-1)[0] || 0).toFixed(2));
+  const ema = parseFloat((technicalindicators.ema({ period: 20, values: prices }).slice(-1)[0] || 0).toFixed(2));
   const bollingerBands = technicalindicators.bollingerbands({
     period: 20,
     values: prices,
@@ -76,18 +76,18 @@ function calculateTechnicalAnalysis(prices) {
     close: prices,
     period: 14
   }).slice(-1)[0] || { k: 0, d: 0 };
-  const adx = technicalindicators.adx({
+  const adx = parseFloat((technicalindicators.adx({
     high: prices.map(() => Math.max(...prices)),
     low: prices.map(() => Math.min(...prices)),
     close: prices,
     period: 14
-  }).slice(-1)[0] || 0;
-  const atr = technicalindicators.atr({
+  }).slice(-1)[0] || 0).toFixed(2));
+  const atr = parseFloat((technicalindicators.atr({
     high: prices.map(() => Math.max(...prices)),
     low: prices.map(() => Math.min(...prices)),
     close: prices,
     period: 14
-  }).slice(-1)[0] || 0;
+  }).slice(-1)[0] || 0).toFixed(2));
 
   // تشخیص سیگنال
   let signal = 'خنثی';
@@ -95,14 +95,14 @@ function calculateTechnicalAnalysis(prices) {
   if (rsi > 70 && macdResult.MACD < macdResult.signal) signal = 'فروش';
 
   return {
-    lastPrice,
-    rsi: parseFloat(rsi.toFixed(2)),
+    lastPrice: parseFloat(lastPrice.toFixed(2)),
+    rsi,
     macd: {
       MACD: parseFloat(macdResult.MACD.toFixed(4)),
       signal: parseFloat(macdResult.signal.toFixed(4))
     },
-    sma: parseFloat(sma.toFixed(2)),
-    ema: parseFloat(ema.toFixed(2)),
+    sma,
+    ema,
     bollingerBands: {
       lower: parseFloat(bollingerBands.lower.toFixed(2)),
       middle: parseFloat(bollingerBands.middle.toFixed(2)),
@@ -112,8 +112,8 @@ function calculateTechnicalAnalysis(prices) {
       k: parseFloat(stochastic.k.toFixed(2)),
       d: parseFloat(stochastic.d.toFixed(2))
     },
-    adx: parseFloat(adx.toFixed(2)),
-    atr: parseFloat(atr.toFixed(2)),
+    adx,
+    atr,
     signal,
     trend: lastPrice > prices[prices.length - 2] ? 'صعودی' : 'نزولی'
   };
