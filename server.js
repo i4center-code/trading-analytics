@@ -29,7 +29,7 @@ async function getCryptoPrices(symbol) {
       timeout: 15000 // 15 ثانیه
     });
 
-    if (!response.data || response.data.status !== 'ok') {
+    if (!response.data || response.data.status !== 'ok' || !response.data.asks || !response.data.bids) {
       throw new Error('داده دریافتی نامعتبر است');
     }
 
@@ -49,6 +49,10 @@ async function getCryptoPrices(symbol) {
 
 // محاسبه تحلیل تکنیکال
 function calculateTechnicalAnalysis(prices) {
+  if (!prices || prices.length === 0) {
+    throw new Error('داده‌های قیمتی برای تحلیل وجود ندارد');
+  }
+
   const lastPrice = prices[prices.length - 1];
 
   // محاسبه اندیکاتورها
