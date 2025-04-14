@@ -5,7 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تحلیلگر ارز دیجیتال ایران افیکس</title>
   <style>
-    /* (همان استایل دارک مد قبلی) */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      height: 50px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 25px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    #symbol-input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    #analyze-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      margin-right: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .result-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .price {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      margin: 15px 0;
+    }
+    .signal {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .buy {
+      background-color: rgba(46, 204, 113, 0.2);
+      color: #27ae60;
+    }
+    .sell {
+      background-color: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+    }
+    .neutral {
+      background-color: rgba(52, 152, 219, 0.2);
+      color: #2980b9;
+    }
+    .indicator {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 5px;
+    }
+    .loading {
+      text-align: center;
+      padding: 30px;
+    }
+    .error {
+      color: #e74c3c;
+      text-align: center;
+      padding: 20px;
+      background-color: rgba(231, 76, 60, 0.1);
+      border-radius: 8px;
+    }
+    .retry-btn {
+      margin-top: 10px;
+      padding: 8px 15px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -83,10 +187,10 @@
         <div class="result-card">
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
           <div class="price">
-            قیمت فعلی: $${formatPrice(data.lastPrice || 0)}
+            قیمت فعلی: ${formatPrice(data.lastPrice)} تومان
           </div>
           <div class="signal ${signalClass}">
-            سیگنال: ${data.signal || 'خنثی'}
+            سیگنال: ${data.signal}
           </div>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
@@ -94,15 +198,9 @@
           
           <div class="indicator">
             <h3>تحلیل تکنیکال</h3>
-            <p>روند: ${data.trend || 'ناشناخته'}</p>
-            <p>RSI: ${(data.rsi || 0).toFixed(2)}</p>
-            <p>MACD: ${(data.macd?.MACD || 0).toFixed(4)} (Signal: ${(data.macd?.signal || 0).toFixed(4)})</p>
-            <p>SMA: ${(data.sma || 0).toFixed(2)}</p>
-            <p>EMA: ${(data.ema || 0).toFixed(2)}</p>
-            <p>Bollinger Bands: Lower=${(data.bollingerBands?.lower || 0).toFixed(2)}, Middle=${(data.bollingerBands?.middle || 0).toFixed(2)}, Upper=${(data.bollingerBands?.upper || 0).toFixed(2)}</p>
-            <p>Stochastic: K=${(data.stochastic?.k || 0).toFixed(2)}, D=${(data.stochastic?.d || 0).toFixed(2)}</p>
-            <p>ADX: ${(data.adx || 0).toFixed(2)}</p>
-            <p>ATR: ${(data.atr || 0).toFixed(2)}</p>
+            <p>روند: ${data.trend}</p>
+            <p>شاخص RSI: ${data.rsi.toFixed(2)}</p>
+            <p>شاخص MACD: ${data.macd.MACD.toFixed(4)}</p>
           </div>
         </div>
       `;
@@ -120,7 +218,7 @@
     }
 
     function formatPrice(price) {
-      return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return price.toLocaleString('fa-IR');
     }
 
     loadSymbols();
