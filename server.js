@@ -9,78 +9,96 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// اطلاعات نمادها
-const SYMBOLS = {
-  BTC: { name: 'بیتکوین', type: 'crypto' },
-  ETH: { name: 'اتریوم', type: 'crypto' },
-  BNB: { name: 'بایننس کوین', type: 'crypto' },
-  XRP: { name: 'ریپل', type: 'crypto' },
-  EURUSD: { name: 'یورو/دلار', type: 'forex' },
-  GBPUSD: { name: 'پوند/دلار', type: 'forex' },
-  USDJPY: { name: 'دلار/ین ژاپن', type: 'forex' },
-  XAU: { name: 'طلا', type: 'metal' },
-  XAG: { name: 'نقره', type: 'metal' }
+// نمادهای ارز دیجیتال پشتیبانی شده
+const CRYPTO_SYMBOLS = {
+  BTC: 'بیتکوین',
+  ETH: 'اتریوم',
+  BNB: 'بایننس کوین',
+  SOL: 'سولانا',
+  XRP: 'ریپل',
+  ADA: 'کاردانو',
+  DOGE: 'دوج کوین',
+  DOT: 'پولکادات',
+  SHIB: 'شیبا اینو'
 };
 
-// تابع برای دریافت داده از API
-async function fetchFromAPI(symbol) {
+// تابع دریافت قیمت از API رایگان CoinGecko
+async function getCryptoPrices(symbol) {
   try {
-    // اینجا می‌توانید آدرس API واقعی ایران افیکس را قرار دهید
-    const response = await axios.get(`https://api.iranfx.com/prices/${symbol}`, {
-      timeout: 5000 // 5 ثانیه timeout
-    });
-    
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=30`,
+      {
+        timeout: 10000 // 10 ثانیه timeout
+      }
+    );
+
     if (!response.data || !response.data.prices) {
       throw new Error('داده دریافتی نامعتبر است');
     }
-    
-    return response.data.prices;
+
+    return response.data.prices.map(item => item[1]); // فقط قیمت‌ها را برمی‌گرداند
   } catch (error) {
-    console.error('خطا در اتصال به API:', error.message);
-    throw new Error('عدم اتصال به سرور ایران افیکس');
+    console.error('خطا در دریافت قیمت:', error.message);
+    throw new Error('عدم اتصال به سرور قیمت‌گذاری');
   }
+}
+
+// محاسبه تحلیل تکنیکال
+function calculateTechnicalAnalysis(prices) {
+  const lastPrice = prices[prices.length - 1];
+  
+  // محاسبه RSI
+  const rsi = technicalindicators.rsi({
+    values: prices,
+    period: 14
+  }).slice(-1)[0] || 50;
+
+  // محاسبه MACD
+  const macd = technicalindicators.macd({
+    values: prices,
+    fastPeriod: 12,
+    slowPeriod: 26,
+    signalPeriod: 9
+  }).slice(-1)[0] || {MACD: 0, signal: 0};
+
+  // تشخیص سیگنال
+  let signal = 'خنثی';
+  if (rsi < 30 && macd.MACD > macd.signal) signal = 'خرید';
+  if (rsi > 70 && macd.MACD < macd.signal) signal = 'فروش';
+
+  return {
+    lastPrice,
+    rsi,
+    macd,
+    signal,
+    trend: lastPrice > prices[prices.length - 2] ? 'صعودی' : 'نزولی'
+  };
 }
 
 // مسیرهای API
 app.get('/api/symbols', (req, res) => {
-  res.json(SYMBOLS);
+  res.json(CRYPTO_SYMBOLS);
 });
 
 app.get('/api/analyze/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
     
-    if (!SYMBOLS[symbol]) {
+    if (!CRYPTO_SYMBOLS[symbol]) {
       return res.status(404).json({
         status: 'error',
-        message: 'نماد پشتیبانی نمی‌شود'
+        message: 'این ارز دیجیتال پشتیبانی نمی‌شود'
       });
     }
 
-    // دریافت داده از API
-    const prices = await fetchFromAPI(symbol);
+    const prices = await getCryptoPrices(symbol);
+    const analysis = calculateTechnicalAnalysis(prices);
     
-    // محاسبه تحلیل تکنیکال
-    const lastPrice = prices[prices.length - 1];
-    const rsi = technicalindicators.rsi({
-      values: prices,
-      period: 14
-    }).slice(-1)[0] || 50;
-    
-    const macd = technicalindicators.macd({
-      values: prices,
-      fastPeriod: 12,
-      slowPeriod: 26,
-      signalPeriod: 9
-    }).slice(-1)[0] || {MACD: 0, signal: 0};
-    
-    // نتیجه نهایی
     res.json({
       status: 'success',
       symbol,
-      name: SYMBOLS[symbol].name,
-      lastPrice,
-      indicators: { rsi, macd },
+      name: CRYPTO_SYMBOLS[symbol],
+      ...analysis,
       lastUpdate: new Date()
     });
     
@@ -98,7 +116,4 @@ app.get('*', (req, res) => {
 });
 
 // شروع سرور
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`سرور در حال اجرا در پورت ${PORT}`);
-});
+module.exports = app;
