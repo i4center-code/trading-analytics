@@ -131,7 +131,6 @@
   </div>
 
   <script>
-    // بارگذاری نمادهای موجود
     async function loadSymbols() {
       try {
         const response = await fetch('/api/symbols');
@@ -151,7 +150,6 @@
       }
     }
 
-    // تحلیل نماد
     document.getElementById('analyze-btn').addEventListener('click', async () => {
       const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
       
@@ -181,7 +179,6 @@
       }
     });
 
-    // نمایش نتیجه
     function showResult(data) {
       const signalClass = data.signal === 'خرید' ? 'buy' : 
                         data.signal === 'فروش' ? 'sell' : 'neutral';
@@ -190,7 +187,7 @@
         <div class="result-card">
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
           <div class="price">
-            قیمت فعلی: ${formatPrice(data.lastPrice)} دلار
+            قیمت فعلی: ${formatPrice(data.lastPrice)} تومان
           </div>
           <div class="signal ${signalClass}">
             سیگنال: ${data.signal}
@@ -209,7 +206,6 @@
       `;
     }
 
-    // نمایش خطا
     function showError(error) {
       document.getElementById('analysis-result').innerHTML = `
         <div class="error">
@@ -221,12 +217,10 @@
       `;
     }
 
-    // فرمت نمایش قیمت
     function formatPrice(price) {
       return price.toLocaleString('fa-IR');
     }
 
-    // شروع برنامه
     loadSymbols();
   </script>
 </body>
