@@ -102,10 +102,10 @@
     }
 
     .price-description {
-      font-size: 14px;
+      font-size: 18px;
       text-align: center;
-      color: #7f8c8d;
-      margin-top: 5px;
+      color: #27ae60; /* رنگ سبز برای "قیمت به ریال" */
+      margin-top: 10px;
     }
 
     .indicator {
@@ -113,16 +113,18 @@
       padding: 10px;
       background: #2c2c2c;
       border-radius: 5px;
+      text-align: left; /* چپ‌چین برای تحلیل تکنیکال */
     }
 
     .bar-chart {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 10px;
       margin-top: 20px;
     }
 
     .bar-container {
-      width: 45%;
+      width: 100%;
       background: #444;
       border-radius: 10px;
       overflow: hidden;
@@ -133,9 +135,10 @@
       height: 30px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       font-size: 14px;
       color: white;
+      padding-left: 10px;
       transition: width 0.5s ease;
     }
 
@@ -149,12 +152,15 @@
 
     .resistance-support {
       margin-top: 15px;
-      font-size: 14px;
-      color: #7f8c8d;
+      padding: 15px;
+      background: #333;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); /* سایه و انعکاس نور */
     }
 
     .resistance {
       color: #e74c3c;
+      margin-bottom: 5px;
     }
 
     .support {
@@ -199,15 +205,6 @@
       #analyze-btn {
         width: 100%;
         margin-right: 0;
-      }
-
-      .bar-chart {
-        flex-direction: column;
-      }
-
-      .bar-container {
-        width: 100%;
-        margin-bottom: 10px;
       }
     }
   </style>
@@ -295,17 +292,11 @@
           </div>
           <div class="indicator">
             <h3>تحلیل تکنیکال</h3>
-            <p>RSI: ${data.indicators.rsi.toFixed(2)}</p>
-            <p>MACD: ${data.indicators.macd.MACD.toFixed(4)} | Signal: ${data.indicators.macd.signal.toFixed(4)}</p>
-            <p>Stochastic (K/D): ${data.indicators.stochastic.k.toFixed(2)} / ${data.indicators.stochastic.d.toFixed(2)}</p>
-            <p>EMA: ${data.indicators.ema.toFixed(2)}</p>
-            <p>SMA: ${data.indicators.sma.toFixed(2)}</p>
-          </div>
-          <div class="resistance-support">
-            <p class="resistance">مقاومت 1: ${data.resistance1}</p>
-            <p class="resistance">مقاومت 2: ${data.resistance2}</p>
-            <p class="support">حمایت 1: ${data.support1}</p>
-            <p class="support">حمایت 2: ${data.support2}</p>
+            <p><strong>RSI:</strong> ${data.indicators.rsi.toFixed(2)}</p>
+            <p><strong>MACD:</strong> ${data.indicators.macd.MACD.toFixed(4)} | Signal: ${data.indicators.macd.signal.toFixed(4)}</p>
+            <p><strong>Stochastic (K/D):</strong> ${data.indicators.stochastic.k.toFixed(2)} / ${data.indicators.stochastic.d.toFixed(2)}</p>
+            <p><strong>EMA:</strong> ${data.indicators.ema.toFixed(2)}</p>
+            <p><strong>SMA:</strong> ${data.indicators.sma.toFixed(2)}</p>
           </div>
           <div class="bar-chart">
             <div class="bar-container">
@@ -318,6 +309,12 @@
                 ${sellPercentage}% فروشنده
               </div>
             </div>
+          </div>
+          <div class="resistance-support">
+            <p class="resistance"><strong>مقاومت 1:</strong> ${data.resistance1}</p>
+            <p class="resistance"><strong>مقاومت 2:</strong> ${data.resistance2}</p>
+            <p class="support"><strong>حمایت 1:</strong> ${data.support1}</p>
+            <p class="support"><strong>حمایت 2:</strong> ${data.support2}</p>
           </div>
           <p style="text-align: center; color: #7f8c8d;">
             آخرین بروزرسانی: ${new Date(data.lastUpdate).toLocaleString('fa-IR')}
