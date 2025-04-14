@@ -191,7 +191,7 @@
         <div class="result-card">
           <h2 style="text-align: center;">${data.name} (${data.symbol})</h2>
           <div class="price">
-            قیمت فعلی: ${formatPrice(data.lastPrice)} تومان
+            قیمت فعلی: ${formatPrice(data.lastPrice)}
           </div>
           <div class="signal ${signalClass}">
             سیگنال: ${data.signal}
@@ -222,7 +222,7 @@
     }
 
     function formatPrice(price) {
-      return price.toLocaleString('fa-IR');
+      return price.toLocaleString('fa-IR'); // فقط عدد فرمت‌بندی‌شده به فارسی
     }
 
     loadSymbols();
