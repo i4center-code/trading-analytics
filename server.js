@@ -20,25 +20,31 @@ const CRYPTO_SYMBOLS = {
   DOGE: 'دوج کوین',
   DOT: 'پولکادات',
   SHIB: 'شیبا اینو',
-  CRV: 'شیبا اینو'
+  CRV: 'کریو'
 };
 
-// تابع دریافت قیمت از API نوبیتکس
+// تابع دریافت قیمت و حجم معاملات از API نوبیتکس
 async function getCryptoPrices(symbol) {
   try {
     const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}IRT`, {
       timeout: 15000 // 15 ثانیه
     });
-    
+
     if (!response.data || response.data.status !== 'ok') {
       throw new Error('داده دریافتی نامعتبر است');
     }
 
-    // استخراج قیمت‌ها از asks و bids
     const { asks, bids } = response.data;
-    const prices = [...asks, ...bids].map(item => parseFloat(item[0])); // فقط قیمت‌ها را برمی‌گرداند
 
-    return prices;
+    // محاسبه حجم کل خرید و فروش
+    const totalBuyVolume = bids.reduce((sum, bid) => sum + parseFloat(bid[1]), 0); // حجم خرید
+    const totalSellVolume = asks.reduce((sum, ask) => sum + parseFloat(ask[1]), 0); // حجم فروش
+
+    return {
+      prices: [...asks, ...bids].map(item => parseFloat(item[0])), // فقط قیمت‌ها
+      totalBuyVolume,
+      totalSellVolume
+    };
   } catch (error) {
     console.error('خطا در دریافت قیمت:', error.message);
     throw new Error('عدم اتصال به سرور قیمت‌گذاری');
@@ -46,7 +52,7 @@ async function getCryptoPrices(symbol) {
 }
 
 // محاسبه تحلیل تکنیکال
-function calculateTechnicalAnalysis(prices) {
+function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   const lastPrice = prices[prices.length - 1];
 
   // محاسبه RSI
@@ -90,38 +96,10 @@ function calculateTechnicalAnalysis(prices) {
   const support1 = Math.min(...prices) * 0.99; // 1% پایین‌تر از کمترین قیمت
   const support2 = Math.min(...prices) * 0.98; // 2% پایین‌تر از کمترین قیمت
 
-  // محاسبه درصد خریدار و فروشنده
-  let buyPercentage = 0;
-  let sellPercentage = 0;
-
-  if (rsi < 30 && macdResult.MACD > macdResult.signal) {
-    buyPercentage += 30;
-  } else if (rsi > 70 && macdResult.MACD < macdResult.signal) {
-    sellPercentage += 30;
-  }
-
-  if (stochastic.k < 20 && stochastic.d < 20) {
-    buyPercentage += 20;
-  } else if (stochastic.k > 80 && stochastic.d > 80) {
-    sellPercentage += 20;
-  }
-
-  if (lastPrice > ema) {
-    buyPercentage += 25;
-  } else {
-    sellPercentage += 25;
-  }
-
-  if (lastPrice > sma) {
-    buyPercentage += 25;
-  } else {
-    sellPercentage += 25;
-  }
-
-  // تنظیم درصد‌ها به 100
-  const totalPercentage = buyPercentage + sellPercentage;
-  buyPercentage = (buyPercentage / totalPercentage) * 100;
-  sellPercentage = (sellPercentage / totalPercentage) * 100;
+  // محاسبه درصد خریدار و فروشنده بر اساس حجم معاملات
+  const totalVolume = totalBuyVolume + totalSellVolume;
+  const buyPercentage = (totalBuyVolume / totalVolume) * 100 || 0;
+  const sellPercentage = (totalSellVolume / totalVolume) * 100 || 0;
 
   return {
     lastPrice,
@@ -147,7 +125,7 @@ app.get('/api/symbols', (req, res) => {
 app.get('/api/analyze/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-    
+
     if (!CRYPTO_SYMBOLS[symbol]) {
       return res.status(404).json({
         status: 'error',
@@ -155,9 +133,9 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       });
     }
 
-    const prices = await getCryptoPrices(symbol);
-    const analysis = calculateTechnicalAnalysis(prices);
-    
+    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol);
+    const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
+
     res.json({
       status: 'success',
       symbol,
@@ -178,7 +156,6 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       sellPercentage: analysis.sellPercentage.toFixed(2),
       lastUpdate: new Date()
     });
-    
   } catch (error) {
     res.status(500).json({
       status: 'error',
@@ -193,4 +170,9 @@ app.get('*', (req, res) => {
 });
 
 // شروع سرور
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`سرور در حال اجرا روی پورت ${PORT}`);
+});
+
 module.exports = app;
