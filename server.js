@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // نمادهای ارز دیجیتال پشتیبانی شده
 const CRYPTO_SYMBOLS = {
-  BTC: 'بیت‌کوین',
+BTC: 'بیت‌کوین',
 ETH: 'اتریوم',
 LTC: 'لایت‌کوین',
 USDT: 'تتر',
