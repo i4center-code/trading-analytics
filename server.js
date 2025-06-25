@@ -9,114 +9,55 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// نمادهای ارز دیجیتال پشتیبانی شده
-const CRYPTO_SYMBOLS = {
-  BTC: 'بیت‌کوین',
-  ETH: 'اتریوم',
-  LTC: 'لایت‌کوین',
-  USDT: 'تتر',
-  XRP: 'ریپل',
-  BCH: 'بیت‌کوین کش',
-  BNB: 'بایننس کوین',
-  EOS: 'ایاس',
-  XLM: 'استلار',
-  ETC: 'اتریوم کلاسیک',
-  TRX: 'ترون',
-  DOGE: 'دوج‌کوین',
-  UNI: 'یونی‌سوپ',
-  DAI: 'دای',
-  LINK: 'چین‌لینک',
-  DOT: 'پولکادات',
-  AAVE: 'آوی',
-  ADA: 'کاردانو',
-  SHIB: 'شیبا اینو',
-  FTM: 'فانتوم',
-  MATIC: 'پولیگان',
-  AXS: 'اکسی اینفینیتی',
-  MANA: 'دکسنترالند',
-  SAND: 'ساندباکس',
-  AVAX: 'آوالانچ',
-  MKR: 'میکر',
-  GMT: 'استپن',
-  USDC: 'یو اس دی کوین',
-  CHZ: 'چیلیز',
-  GRT: 'گراف',
-  sui: 'اس یو آی',
-  CRV: 'کروی',
-  BAND: 'باند پروتکل',
-  COMP: 'کامپاوند',
-  EGLD: 'الروندو',
-  HBAR: 'هدرا',
-  GAL: 'گالا',
-  WBTC: 'رابط بیت‌کوین',
-  IMX: 'ایمجیکس',
-  ONE: 'هارمونی',
-  GLM: 'گلم',
-  ENS: 'اورث‌نیم سرویس',
-  BTT: 'بیت‌تورنت',
-  SUSHI: 'سوشی‌سوپ',
-  LDO: 'لداین',
-  ATOM: 'کوزموس',
-  ZRO: 'زرو',
-  STORJ: 'استورج',
-  ANT: 'ارگون',
-  AEVO: 'ایو',
-  FLOKI: 'فلوکی',
-  RSR: 'رزرو رایتس',
-  API3: 'ای‌پی‌آی۳',
-  XMR: 'مونرو',
-  OM: 'منی',
-  RDNT: 'رادینت',
-  MAGIC: 'مجیک',
-  T: 'ٹ',
-  NOT: 'نات‌کوین',
-  CVX: 'کانوکس',
-  XTZ: 'تیزوس',
-  FIL: 'فایل‌کوین',
-  UMA: 'اوما',
-  BABYDOGE: 'بیبی دوج',
-  SSV: 'اس‌اس‌وی',
-  DAO: 'داو',
-  BLUR: 'بلور',
-  EGALA: 'ای‌گالا',
-  GMX: 'جی‌ام‌ایکس',
-  FLOW: 'فلو',
-  W: 'راب',
-  CVC: 'سیویک',
-  NMR: 'نومیرای',
-  SKL: 'سیکل',
-  SNT: 'استاتیک',
-  BAT: 'بیسیک اتنشن توکن',
-  TRB: 'تلرب',
-  INCH: 'وان‌اینچ',
-  WOO: 'ووکوین',
-  MASK: 'ماسک‌نیتورک',
-  PEPEUSDT: 'پپ',
-  APT: 'اپته',
-  TON: 'تون',
-  JST: 'جاست',
-  NEAR: 'نیر',
-  MDT: 'مدیتورم',
-  LRC: 'لوپرینگ',
-  LPT: 'لیوپر',
-  BICO: 'بیکو',
-  AGLD: 'آغازگلد',
-  ALGO: 'الگورند',
-  ENJ: 'انجین',
-  OMG: 'اوه‌ام‌جی',
-  DYDX: 'دای‌دی‌ایکس',
-  AGIX: 'سینژولاریتی‌نت',
-  MEME: 'مم',
-  BAL: 'بالانسر',
-  SNX: 'سینتتیکس'
+// نمادهای پشتیبانی شده در Exir v2 (جفت‌های USDT)
+const CRYPTO_PAIRS = {
+  'BTC-USDT': 'بیت‌کوین',
+  'ETH-USDT': 'اتریوم',
+  'LTC-USDT': 'لایت‌کوین',
+  'XRP-USDT': 'ریپل',
+  'BCH-USDT': 'بیت‌کوین کش',
+  'BNB-USDT': 'بایننس کوین',
+  'EOS-USDT': 'ایاس',
+  'XLM-USDT': 'استلار',
+  'TRX-USDT': 'ترون',
+  'DOGE-USDT': 'دوج‌کوین',
+  'UNI-USDT': 'یونی‌سوپ',
+  'LINK-USDT': 'چین‌لینک',
+  'DOT-USDT': 'پولکادات',
+  'ADA-USDT': 'کاردانو',
+  'SHIB-USDT': 'شیبا اینو',
+  'MATIC-USDT': 'پولیگان',
+  'AVAX-USDT': 'آوالانچ',
+  'GMT-USDT': 'استپن',
+  'CRV-USDT': 'کروی',
+  'FIL-USDT': 'فایل‌کوین',
+  'APE-USDT': 'اِیپی',
+  'FLOKI-USDT': 'فلوکی',
+  'SANTOS-USDT': 'سانتوس',
+  'ENJ-USDT': 'انجین',
+  'MANA-USDT': 'دکسنترالند',
+  'SAND-USDT': 'ساندباکس',
+  'COMP-USDT': 'کامپاوند',
+  'GRT-USDT': 'گراف',
+  'BAT-USDT': 'بیسیک اتنشن توکن',
+  'XTZ-USDT': 'تیزوس',
+  'HBAR-USDT': 'هدرا',
+  'GALA-USDT': 'گالا',
+  'API3-USDT': 'ای‌پی‌آی۳',
+  'DYDX-USDT': 'دای‌دی‌ایکس',
+  'AGIX-USDT': 'سینژولاریتی‌نت'
 };
 
-// تابع دریافت قیمت و حجم معاملات از API Exir
-async function getCryptoPrices(symbol) {
+// تابع دریافت قیمت و حجم معاملات از API Exir v2
+async function getCryptoPrices(pair) {
   try {
-    const formattedSymbol = `${symbol}-IRT`; // Exir format
-    const response = await axios.get(`https://api.exir.io/v1/orderbook?symbol=${formattedSymbol}`, {
-      timeout: 15000 // 15 ثانیه
+    const formattedPair = pair.toLowerCase(); // Exir expects lowercase like btc-usdt
+
+    const response = await axios.get(`https://api.exir.io/v2/orderbook?symbol=${formattedPair}`, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (NodeJS App)'
+      }
     });
 
     if (!response.data || !Array.isArray(response.data.asks) || !Array.isArray(response.data.bids)) {
@@ -135,22 +76,21 @@ async function getCryptoPrices(symbol) {
       totalSellVolume
     };
   } catch (error) {
-    console.error('خطا در دریافت قیمت:', error.message);
+    console.error('❌ خطا در دریافت قیمت:', error.message);
+    console.error('🔍 جزئیات خطا:', error.response?.data || 'بدون داده');
     throw new Error('عدم اتصال به سرور قیمت‌گذاری Exir');
   }
 }
 
-// محاسبه تحلیل تکنیکال
+// محاسبه تحلیل تکنیکال (همان منطق قبلی)
 function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   const lastPrice = prices[prices.length - 1];
 
-  // محاسبه RSI
   const rsi = technicalindicators.rsi({
     values: prices,
     period: 14
   }).slice(-1)[0] || 50;
 
-  // محاسبه MACD
   const macdResult = technicalindicators.macd({
     values: prices,
     fastPeriod: 12,
@@ -158,7 +98,6 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
     signalPeriod: 9
   }).slice(-1)[0] || { MACD: 0, signal: 0 };
 
-  // محاسبه Stochastic
   const stochastic = technicalindicators.stochastic({
     high: prices.map(() => Math.max(...prices)),
     low: prices.map(() => Math.min(...prices)),
@@ -167,25 +106,21 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
     signalPeriod: 3
   }).slice(-1)[0] || { k: 50, d: 50 };
 
-  // محاسبه EMA (Exponential Moving Average)
   const ema = technicalindicators.ema({
     values: prices,
     period: 14
   }).slice(-1)[0] || 0;
 
-  // محاسبه SMA (Simple Moving Average)
   const sma = technicalindicators.sma({
     values: prices,
     period: 14
   }).slice(-1)[0] || 0;
 
-  // محاسبه سطوح مقاومت و حمایت
-  const resistance1 = Math.max(...prices) * 1.01; // 1% بالاتر از بیشترین قیمت
-  const resistance2 = Math.max(...prices) * 1.02; // 2% بالاتر از بیشترین قیمت
-  const support1 = Math.min(...prices) * 0.99; // 1% پایین‌تر از کمترین قیمت
-  const support2 = Math.min(...prices) * 0.98; // 2% پایین‌تر از کمترین قیمت
+  const resistance1 = Math.max(...prices) * 1.01;
+  const resistance2 = Math.max(...prices) * 1.02;
+  const support1 = Math.min(...prices) * 0.99;
+  const support2 = Math.min(...prices) * 0.98;
 
-  // محاسبه درصد خریدار و فروشنده بر اساس حجم معاملات
   const totalVolume = totalBuyVolume + totalSellVolume;
   const buyPercentage = (totalBuyVolume / totalVolume) * 100 || 0;
   const sellPercentage = (totalSellVolume / totalVolume) * 100 || 0;
@@ -206,29 +141,29 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   };
 }
 
-// مسیرهای API
+// API مسیرهای جدید با پشتیبانی از جفت‌های USDT
 app.get('/api/symbols', (req, res) => {
-  res.json(CRYPTO_SYMBOLS);
+  res.json(CRYPTO_PAIRS);
 });
 
-app.get('/api/analyze/:symbol', async (req, res) => {
+app.get('/api/analyze/:pair', async (req, res) => {
   try {
-    const symbol = req.params.symbol.toUpperCase();
+    const pair = req.params.pair.toUpperCase();
 
-    if (!CRYPTO_SYMBOLS[symbol]) {
+    if (!CRYPTO_PAIRS[pair]) {
       return res.status(404).json({
         status: 'error',
-        message: 'این ارز دیجیتال پشتیبانی نمی‌شود'
+        message: 'این جفت ارز دیجیتال پشتیبانی نمی‌شود'
       });
     }
 
-    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol);
+    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(pair);
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
 
     res.json({
       status: 'success',
-      symbol,
-      name: CRYPTO_SYMBOLS[symbol],
+      pair,
+      name: CRYPTO_PAIRS[pair],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       indicators: {
         rsi: analysis.rsi,
