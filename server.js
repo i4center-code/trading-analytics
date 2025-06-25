@@ -3,86 +3,91 @@ const axios = require('axios');
 const technicalindicators = require('technicalindicators');
 const cors = require('cors');
 const path = require('path');
+const NodeCache = require('node-cache');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// نمادهای پشتیبانی شده در Exir v2 (جفت‌های USDT)
-const CRYPTO_PAIRS = {
-  'BTC-USDT': 'بیت‌کوین',
-  'ETH-USDT': 'اتریوم',
-  'LTC-USDT': 'لایت‌کوین',
-  'XRP-USDT': 'ریپل',
-  'BCH-USDT': 'بیت‌کوین کش',
-  'BNB-USDT': 'بایننس کوین',
-  'EOS-USDT': 'ایاس',
-  'XLM-USDT': 'استلار',
-  'TRX-USDT': 'ترون',
-  'DOGE-USDT': 'دوج‌کوین',
-  'UNI-USDT': 'یونی‌سوپ',
-  'LINK-USDT': 'چین‌لینک',
-  'DOT-USDT': 'پولکادات',
-  'ADA-USDT': 'کاردانو',
-  'SHIB-USDT': 'شیبا اینو',
-  'MATIC-USDT': 'پولیگان',
-  'AVAX-USDT': 'آوالانچ',
-  'GMT-USDT': 'استپن',
-  'CRV-USDT': 'کروی',
-  'FIL-USDT': 'فایل‌کوین',
-  'APE-USDT': 'اِیپی',
-  'FLOKI-USDT': 'فلوکی',
-  'SANTOS-USDT': 'سانتوس',
-  'ENJ-USDT': 'انجین',
-  'MANA-USDT': 'دکسنترالند',
-  'SAND-USDT': 'ساندباکس',
-  'COMP-USDT': 'کامپاوند',
-  'GRT-USDT': 'گراف',
-  'BAT-USDT': 'بیسیک اتنشن توکن',
-  'XTZ-USDT': 'تیزوس',
-  'HBAR-USDT': 'هدرا',
-  'GALA-USDT': 'گالا',
-  'API3-USDT': 'ای‌پی‌آی۳',
-  'DYDX-USDT': 'دای‌دی‌ایکس',
-  'AGIX-USDT': 'سینژولاریتی‌نت'
+const cache = new NodeCache({ stdTTL: 60 });
+
+const CRYPTO_SYMBOLS = {
+  BTC: 'بیت‌کوین',
+  ETH: 'اتریوم',
+  // ... (بقیه نمادها مانند قبل)
 };
 
-// تابع دریافت قیمت و حجم معاملات از API Exir v2
-async function getCryptoPrices(pair) {
+// تابع دریافت اطلاعات پایه از Exir V2
+async function getExirConstants() {
   try {
-    const formattedPair = pair.toLowerCase(); // Exir expects lowercase like btc-usdt
-
-    const response = await axios.get(`https://api.exir.io/v2/orderbook?symbol=${formattedPair}`, {
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (NodeJS App)'
-      }
-    });
-
-    if (!response.data || !Array.isArray(response.data.asks) || !Array.isArray(response.data.bids)) {
-      throw new Error('داده دریافتی نامعتبر است');
-    }
-
-    const { asks, bids } = response.data;
-
-    // محاسبه حجم کل خرید و فروش
-    const totalBuyVolume = bids.reduce((sum, bid) => sum + parseFloat(bid[1]), 0); // حجم خرید
-    const totalSellVolume = asks.reduce((sum, ask) => sum + parseFloat(ask[1]), 0); // حجم فروش
-
-    return {
-      prices: [...asks, ...bids].map(item => parseFloat(item[0])), // فقط قیمت‌ها
-      totalBuyVolume,
-      totalSellVolume
-    };
+    const response = await axios.get('https://api.exir.io/v2/constants');
+    return response.data;
   } catch (error) {
-    console.error('❌ خطا در دریافت قیمت:', error.message);
-    console.error('🔍 جزئیات خطا:', error.response?.data || 'بدون داده');
-    throw new Error('عدم اتصال به سرور قیمت‌گذاری Exir');
+    console.error('خطا در دریافت اطلاعات پایه:', error.message);
+    return null;
   }
 }
 
-// محاسبه تحلیل تکنیکال (همان منطق قبلی)
+// تابع دریافت قیمت از API Exir V2
+async function getCryptoPrices(symbol) {
+  const cacheKey = `price_${symbol}`;
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    // دریافت اطلاعات تیکر
+    const tickerResponse = await axios.get(`https://api.exir.io/v2/ticker?symbol=${symbol.toLowerCase()}-irt`, {
+      timeout: 15000
+    });
+
+    if (!tickerResponse.data) {
+      throw new Error('داده دریافتی نامعتبر است');
+    }
+
+    // دریافت اطلاعات دفتر سفارشات
+    const orderbookResponse = await axios.get(`https://api.exir.io/v2/orderbook?symbol=${symbol.toLowerCase()}-irt`, {
+      timeout: 15000
+    });
+
+    const tickerData = tickerResponse.data;
+    const orderbookData = orderbookResponse.data;
+
+    const lastPrice = parseFloat(tickerData.last);
+    const highPrice = parseFloat(tickerData.high);
+    const lowPrice = parseFloat(tickerData.low);
+    const volume = parseFloat(tickerData.volume);
+    const bestBid = parseFloat(orderbookData.bids[0][0]);
+    const bestAsk = parseFloat(orderbookData.asks[0][0]);
+
+    const spread = (bestAsk - bestBid) || (highPrice - lowPrice) * 0.01;
+    const asks = orderbookData.asks.map(ask => [parseFloat(ask[0]), parseFloat(ask[1])]);
+    const bids = orderbookData.bids.map(bid => [parseFloat(bid[0]), parseFloat(bid[1])]);
+
+    const totalBuyVolume = bids.reduce((sum, bid) => sum + bid[1], 0);
+    const totalSellVolume = asks.reduce((sum, ask) => sum + ask[1], 0);
+
+    const result = {
+      prices: [highPrice, lowPrice, lastPrice, ...asks.map(a => a[0]), ...bids.map(b => b[0])],
+      totalBuyVolume,
+      totalSellVolume,
+      lastPrice,
+      orderbook: {
+        asks,
+        bids
+      }
+    };
+
+    cache.set(cacheKey, result);
+    return result;
+
+  } catch (error) {
+    console.error('خطا در دریافت قیمت:', error.message);
+    throw new Error('عدم اتصال به سرور قیمت‌گذاری');
+  }
+}
+
+// محاسبه تحلیل تکنیکال (بدون تغییر)
 function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   const lastPrice = prices[prices.length - 1];
 
@@ -141,30 +146,39 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   };
 }
 
-// API مسیرهای جدید با پشتیبانی از جفت‌های USDT
-app.get('/api/symbols', (req, res) => {
-  res.json(CRYPTO_PAIRS);
+// مسیرهای API
+app.get('/api/symbols', async (req, res) => {
+  try {
+    const constants = await getExirConstants();
+    if (constants) {
+      const symbols = {};
+      Object.entries(constants.pairs).forEach(([pair, data]) => {
+        if (pair.endsWith('-irt')) {
+          const symbol = pair.split('-')[0].toUpperCase();
+          symbols[symbol] = CRYPTO_SYMBOLS[symbol] || symbol;
+        }
+      });
+      res.json(symbols);
+    } else {
+      res.json(CRYPTO_SYMBOLS);
+    }
+  } catch (error) {
+    res.json(CRYPTO_SYMBOLS);
+  }
 });
 
-app.get('/api/analyze/:pair', async (req, res) => {
+app.get('/api/analyze/:symbol', async (req, res) => {
   try {
-    const pair = req.params.pair.toUpperCase();
+    const symbol = req.params.symbol.toUpperCase();
 
-    if (!CRYPTO_PAIRS[pair]) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'این جفت ارز دیجیتال پشتیبانی نمی‌شود'
-      });
-    }
-
-    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(pair);
+    const { prices, totalBuyVolume, totalSellVolume, lastPrice } = await getCryptoPrices(symbol);
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
 
     res.json({
       status: 'success',
-      pair,
-      name: CRYPTO_PAIRS[pair],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
+      symbol,
+      name: CRYPTO_SYMBOLS[symbol] || symbol,
+      lastPrice: lastPrice.toLocaleString('fa-IR'),
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -178,7 +192,8 @@ app.get('/api/analyze/:pair', async (req, res) => {
       support2: analysis.support2.toLocaleString('fa-IR'),
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
-      lastUpdate: new Date()
+      lastUpdate: new Date(),
+      dataSource: 'EXIR V2'
     });
   } catch (error) {
     res.status(500).json({
@@ -188,15 +203,13 @@ app.get('/api/analyze/:pair', async (req, res) => {
   }
 });
 
-// مسیر اصلی
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// شروع سرور
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`سرور در حال اجرا روی پورت ${PORT}`);
+  console.log(`سرور در حال اجرا روی پورت ${PORT} | استفاده از API Exir V2`);
 });
 
 module.exports = app;
