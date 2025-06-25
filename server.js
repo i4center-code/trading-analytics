@@ -1,6 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-const technicalindicators = require('technicalindicators');
 const cors = require('cors');
 const path = require('path');
 
@@ -9,125 +8,66 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// لیست جفت‌های پشتیبانی شده
+// لیست نمادهای پشتیبانی شده
 const CRYPTO_PAIRS = {
-  'BTC-USDT': 'بیت‌کوین',
-  'ETH-USDT': 'اتریوم',
-  'LTC-USDT': 'لایت‌کوین',
-  'XRP-USDT': 'ریپل',
-  'BCH-USDT': 'بیت‌کوین کش',
-  'BNB-USDT': 'بایننس کوین',
-  'EOS-USDT': 'ایاس',
-  'XLM-USDT': 'استلار',
-  'TRX-USDT': 'ترون',
-  'DOGE-USDT': 'دوج‌کوین',
-  'UNI-USDT': 'یونی‌سوپ',
-  'LINK-USDT': 'چین‌لینک',
-  'DOT-USDT': 'پولکادات',
-  'ADA-USDT': 'کاردانو',
-  'SHIB-USDT': 'شیبا اینو',
-  'MATIC-USDT': 'پولیگان',
-  'AVAX-USDT': 'آوالانچ',
-  'GMT-USDT': 'استپن',
-  'CRV-USDT': 'کروی',
-  'FIL-USDT': 'فایل‌کوین',
-  'APE-USDT': 'اِیپی',
-  'FLOKI-USDT': 'فلوکی',
-  'SANTOS-USDT': 'سانتوس',
-  'ENJ-USDT': 'انجین',
-  'MANA-USDT': 'دکسنترالند',
-  'SAND-USDT': 'ساندباکس',
-  'COMP-USDT': 'کامپاوند',
-  'GRT-USDT': 'گراف',
-  'BAT-USDT': 'بیسیک اتنشن توکن',
-  'XTZ-USDT': 'تیزوس',
-  'HBAR-USDT': 'هدرا',
-  'GALA-USDT': 'گالا',
-  'API3-USDT': 'ای‌پی‌آی۳',
-  'DYDX-USDT': 'دای‌دی‌ایکس',
-  'AGIX-USDT': 'سینژولاریتی‌نت'
+  'BTC-USD': 'بیت‌کوین',
+  'USDT-USD': 'دلار دیجیتال'
 };
 
-// استفاده از Proxy ما برای Exir
+// دریافت قیمت از API‌های غیر فیلترشده
 async function getCryptoPrices(pair) {
   try {
-    const proxyUrl = `https://exir-proxy.vercel.app/api?pair=${pair}`;
-    const response = await axios.get(proxyUrl, {
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (NodeJS App)'
-      }
-    });
+    let data = {};
 
-    if (!response.data || !Array.isArray(response.data.asks) || !Array.isArray(response.data.bids)) {
-      throw new Error('داده دریافتی نامعتبر است');
+    if (pair === 'BTC-USD') {
+      const btcResponse = await axios.get('https://api.coindesk.com/v1/bpi/currentprice.json'); 
+      const usdToIrrResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD'); 
+
+      const btcPriceUSD = btcResponse.data.bpi.USD.rate_float;
+      const usdToIrrRate = usdToIrrResponse.data.rates.IRR;
+
+      data = {
+        priceInIRR: btcPriceUSD * usdToIrrRate,
+        priceInUSD: btcPriceUSD,
+        symbol: 'BTC'
+      };
+
+    } else if (pair === 'USDT-USD') {
+      // USDT = 1 دلار ثابت (حدودیت دارد)
+      const usdToIrrResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD'); 
+      const usdToIrrRate = usdToIrrResponse.data.rates.IRR;
+
+      data = {
+        priceInIRR: 1 * usdToIrrRate,
+        priceInUSD: 1,
+        symbol: 'USDT'
+      };
     }
-
-    const { asks, bids } = response.data;
-
-    const totalBuyVolume = bids.reduce((sum, bid) => sum + parseFloat(bid[1]), 0);
-    const totalSellVolume = asks.reduce((sum, ask) => sum + parseFloat(ask[1]), 0);
 
     return {
-      prices: [...asks, ...bids].map(item => parseFloat(item[0])),
-      totalBuyVolume,
-      totalSellVolume
+      prices: [data.priceInIRR],
+      totalBuyVolume: 0,
+      totalSellVolume: 0
     };
+
   } catch (error) {
     console.error('❌ خطا در دریافت قیمت:', error.message);
-    if (error.response) {
-      console.error('📝 وضعیت HTTP:', error.response.status);
-      console.error('🔍 محتوای خطا:', error.response.data);
-    }
-    throw new Error('عدم اتصال به سرور قیمت‌گذاری Exir');
+    throw new Error('عدم اتصال به منبع قیمت‌گذاری');
   }
 }
 
-// محاسبه تحلیل تکنیکال
+// محاسبات ساده تکنیکال (برای تست فقط)
 function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   const lastPrice = prices[prices.length - 1];
-
-  const rsi = technicalindicators.rsi({ values: prices, period: 14 }).slice(-1)[0] || 50;
-  const macdResult = technicalindicators.macd({
-    values: prices,
-    fastPeriod: 12,
-    slowPeriod: 26,
-    signalPeriod: 9
-  }).slice(-1)[0] || { MACD: 0, signal: 0 };
-
-  const stochastic = technicalindicators.stochastic({
-    high: prices.map(() => Math.max(...prices)),
-    low: prices.map(() => Math.min(...prices)),
-    close: prices,
-    period: 14,
-    signalPeriod: 3
-  }).slice(-1)[0] || { k: 50, d: 50 };
-
-  const ema = technicalindicators.ema({ values: prices, period: 14 }).slice(-1)[0] || 0;
-  const sma = technicalindicators.sma({ values: prices, period: 14 }).slice(-1)[0] || 0;
-
-  const resistance1 = Math.max(...prices) * 1.01;
-  const resistance2 = Math.max(...prices) * 1.02;
-  const support1 = Math.min(...prices) * 0.99;
-  const support2 = Math.min(...prices) * 0.98;
-
-  const totalVolume = totalBuyVolume + totalSellVolume;
-  const buyPercentage = (totalBuyVolume / totalVolume) * 100 || 0;
-  const sellPercentage = (totalSellVolume / totalVolume) * 100 || 0;
+  const buyPercentage = (totalBuyVolume / (totalBuyVolume + totalSellVolume)) * 100 || 50;
+  const sellPercentage = (totalSellVolume / (totalBuyVolume + totalSellVolume)) * 100 || 50;
 
   return {
     lastPrice,
-    rsi,
-    macd: macdResult,
-    stochastic,
-    ema,
-    sma,
-    resistance1,
-    resistance2,
-    support1,
-    support2,
-    buyPercentage,
-    sellPercentage
+    resistance1: lastPrice * 1.01,
+    support1: lastPrice * 0.99,
+    buyPercentage: buyPercentage.toFixed(2),
+    sellPercentage: sellPercentage.toFixed(2)
   };
 }
 
@@ -147,8 +87,8 @@ app.get('/api/analyze/:pair', async (req, res) => {
       });
     }
 
-    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(pair);
-    const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
+    const { prices } = await getCryptoPrices(pair);
+    const analysis = calculateTechnicalAnalysis(prices, 1000, 1000); // حجم فرضی
 
     res.json({
       status: 'success',
@@ -156,20 +96,14 @@ app.get('/api/analyze/:pair', async (req, res) => {
       name: CRYPTO_PAIRS[pair],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       indicators: {
-        rsi: analysis.rsi,
-        macd: analysis.macd,
-        stochastic: analysis.stochastic,
-        ema: analysis.ema,
-        sma: analysis.sma
+        resistance1: analysis.resistance1.toLocaleString('fa-IR'),
+        support1: analysis.support1.toLocaleString('fa-IR'),
+        buyPercentage: analysis.buyPercentage,
+        sellPercentage: analysis.sellPercentage
       },
-      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
-      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
-      support1: analysis.support1.toLocaleString('fa-IR'),
-      support2: analysis.support2.toLocaleString('fa-IR'),
-      buyPercentage: analysis.buyPercentage.toFixed(2),
-      sellPercentage: analysis.sellPercentage.toFixed(2),
       lastUpdate: new Date()
     });
+
   } catch (error) {
     res.status(500).json({
       status: 'error',
@@ -188,5 +122,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ سرور در حال اجرا روی پورت ${PORT}`);
 });
-
-module.exports = app;
