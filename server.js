@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// لیست جفت‌های پشتیبانی شده در Exir v2
+// لیست جفت‌های پشتیبانی شده
 const CRYPTO_PAIRS = {
   'BTC-USDT': 'بیت‌کوین',
   'ETH-USDT': 'اتریوم',
@@ -48,11 +48,11 @@ const CRYPTO_PAIRS = {
   'AGIX-USDT': 'سینژولاریتی‌نت'
 };
 
-// دریافت قیمت از Exir v2
+// استفاده از Proxy ما برای Exir
 async function getCryptoPrices(pair) {
   try {
-    const formattedPair = pair.toLowerCase(); // Exir expects lowercase
-    const response = await axios.get(`https://api.exir.io/v2/orderbook?symbol=${formattedPair}`, {
+    const proxyUrl = `https://exir-proxy.vercel.app/api?pair=${pair}`;
+    const response = await axios.get(proxyUrl, {
       timeout: 15000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (NodeJS App)'
@@ -131,7 +131,7 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   };
 }
 
-// API مسیرها
+// API Endpoints
 app.get('/api/symbols', (req, res) => {
   res.json(CRYPTO_PAIRS);
 });
@@ -186,7 +186,7 @@ app.get('*', (req, res) => {
 // شروع سرور
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`سرور در حال اجرا روی پورت ${PORT}`);
+  console.log(`✅ سرور در حال اجرا روی پورت ${PORT}`);
 });
 
 module.exports = app;
