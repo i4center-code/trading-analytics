@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// نمادهای پشتیبانی شده در Exir v2 (جفت‌های USDT)
+// لیست جفت‌های پشتیبانی شده در Exir v2
 const CRYPTO_PAIRS = {
   'BTC-USDT': 'بیت‌کوین',
   'ETH-USDT': 'اتریوم',
@@ -48,11 +48,10 @@ const CRYPTO_PAIRS = {
   'AGIX-USDT': 'سینژولاریتی‌نت'
 };
 
-// تابع دریافت قیمت و حجم معاملات از API Exir v2
+// دریافت قیمت از Exir v2
 async function getCryptoPrices(pair) {
   try {
-    const formattedPair = pair.toLowerCase(); // Exir expects lowercase like btc-usdt
-
+    const formattedPair = pair.toLowerCase(); // Exir expects lowercase
     const response = await axios.get(`https://api.exir.io/v2/orderbook?symbol=${formattedPair}`, {
       timeout: 15000,
       headers: {
@@ -66,18 +65,20 @@ async function getCryptoPrices(pair) {
 
     const { asks, bids } = response.data;
 
-    // محاسبه حجم کل خرید و فروش
-    const totalBuyVolume = bids.reduce((sum, bid) => sum + parseFloat(bid[1]), 0); // حجم خرید
-    const totalSellVolume = asks.reduce((sum, ask) => sum + parseFloat(ask[1]), 0); // حجم فروش
+    const totalBuyVolume = bids.reduce((sum, bid) => sum + parseFloat(bid[1]), 0);
+    const totalSellVolume = asks.reduce((sum, ask) => sum + parseFloat(ask[1]), 0);
 
     return {
-      prices: [...asks, ...bids].map(item => parseFloat(item[0])), // فقط قیمت‌ها
+      prices: [...asks, ...bids].map(item => parseFloat(item[0])),
       totalBuyVolume,
       totalSellVolume
     };
   } catch (error) {
     console.error('❌ خطا در دریافت قیمت:', error.message);
-    console.error('🔍 جزئیات خطا:', error.response?.data || 'بدون داده');
+    if (error.response) {
+      console.error('📝 وضعیت HTTP:', error.response.status);
+      console.error('🔍 محتوای خطا:', error.response.data);
+    }
     throw new Error('عدم اتصال به سرور قیمت‌گذاری Exir');
   }
 }
@@ -86,11 +87,7 @@ async function getCryptoPrices(pair) {
 function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   const lastPrice = prices[prices.length - 1];
 
-  const rsi = technicalindicators.rsi({
-    values: prices,
-    period: 14
-  }).slice(-1)[0] || 50;
-
+  const rsi = technicalindicators.rsi({ values: prices, period: 14 }).slice(-1)[0] || 50;
   const macdResult = technicalindicators.macd({
     values: prices,
     fastPeriod: 12,
@@ -106,15 +103,8 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
     signalPeriod: 3
   }).slice(-1)[0] || { k: 50, d: 50 };
 
-  const ema = technicalindicators.ema({
-    values: prices,
-    period: 14
-  }).slice(-1)[0] || 0;
-
-  const sma = technicalindicators.sma({
-    values: prices,
-    period: 14
-  }).slice(-1)[0] || 0;
+  const ema = technicalindicators.ema({ values: prices, period: 14 }).slice(-1)[0] || 0;
+  const sma = technicalindicators.sma({ values: prices, period: 14 }).slice(-1)[0] || 0;
 
   const resistance1 = Math.max(...prices) * 1.01;
   const resistance2 = Math.max(...prices) * 1.02;
@@ -141,7 +131,7 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   };
 }
 
-// API مسیرهای جدید با پشتیبانی از جفت‌های USDT
+// API مسیرها
 app.get('/api/symbols', (req, res) => {
   res.json(CRYPTO_PAIRS);
 });
