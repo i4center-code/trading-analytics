@@ -150,7 +150,13 @@ async function getCryptoPrices(symbol, pair) {
 
 // محاسبه تحلیل تکنیکال
 function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
+  if (!prices || prices.length === 0) {
+    throw new Error('هیچ داده قیمتی دریافت نشده است');
+  }
   const lastPrice = prices[prices.length - 1];
+  if (typeof lastPrice !== 'number' || isNaN(lastPrice)) {
+    throw new Error('قیمت نهایی نامعتبر است');
+  }
   // محاسبه RSI
   const rsi = technicalindicators.rsi({
     values: prices,
@@ -236,10 +242,11 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
       symbol,
       pair,
       name: CRYPTO_SYMBOLS[symbol],
+      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'), // برای سازگاری با کلاینت‌های قدیمی
       displayPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
       unit,
       currencyLabel: unit,
-      warning: pair === 'IRT' ? 'لطفاً از displayPrice استفاده کنید و "ریال" را دستی اضافه نکنید.' : 'لطفاً از displayPrice استفاده کنید.',
+      warning: pair === 'IRT' ? 'لطفاً از displayPrice استفاده کنید، نه lastPrice، تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.' : 'لطفاً از displayPrice استفاده کنید.',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -247,9 +254,13 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
+      resistance1: analysis.resistance1.toLocaleString('fa-IR'), // برای سازگاری
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
+      resistance2: analysis.resistance2.toLocaleString('fa-IR'), // برای سازگاری
       displayResistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
+      support1: analysis.support1.toLocaleString('fa-IR'), // برای سازگاری
       displaySupport1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
+      support2: analysis.support2.toLocaleString('fa-IR'), // برای سازگاری
       displaySupport2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
@@ -284,10 +295,11 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       symbol,
       pair: 'IRT',
       name: CRYPTO_SYMBOLS[symbol],
+      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'), // برای سازگاری
       displayPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
       unit,
       currencyLabel: unit,
-      warning: 'لطفاً از displayPrice استفاده کنید و "ریال" را دستی اضافه نکنید.',
+      warning: 'لطفاً از displayPrice استفاده کنید، نه lastPrice، تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -295,9 +307,13 @@ app.get('/api/analyze/:symbol', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
+      resistance1: analysis.resistance1.toLocaleString('fa-IR'), // برای سازگاری
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
+      resistance2: analysis.resistance2.toLocaleString('fa-IR'), // برای سازگاری
       displayResistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
+      support1: analysis.support1.toLocaleString('fa-IR'), // برای سازگاری
       displaySupport1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
+      support2: analysis.support2.toLocaleString('fa-IR'), // برای سازگاری
       displaySupport2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
