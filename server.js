@@ -235,7 +235,7 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
       pair,
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
-      unit: pair === 'IRT' ? 'تومان' : 'USDT',
+      unit: pair === 'IRT' ? 'تومان' : 'دلار',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -261,26 +261,26 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
   }
 });
 
-// مسیر پیش‌فرض برای سازگاری با کلاینت‌های قدیمی
+// مسیر پیش‌فرض برای نمایش قیمت‌ها به دلار (USDT)
 app.get('/api/analyze/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-    console.log(`درخواست تحلیل پیش‌فرض برای نماد: ${symbol}IRT`);
+    console.log(`درخواست تحلیل پیش‌فرض برای نماد: ${symbol}USDT`);
     if (!CRYPTO_SYMBOLS[symbol]) {
       return res.status(404).json({
         status: 'error',
         message: 'این ارز دیجیتال پشتیبانی نمی‌شود'
       });
     }
-    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, 'IRT');
+    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, 'USDT');
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
     res.json({
       status: 'success',
       symbol,
-      pair: 'IRT',
+      pair: 'USDT',
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
-      unit: 'تومان',
+      unit: 'دلار',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -297,7 +297,7 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       lastUpdate: new Date()
     });
   } catch (error) {
-    console.error(`خطا در تحلیل پیش‌فرض ${symbol}IRT:`, error.message, error.response ? error.response.data : '');
+    console.error(`خطا در تحلیل پیش‌فرض ${symbol}USDT:`, error.message, error.response ? error.response.data : '');
     res.status(500).json({
       status: 'error',
       message: error.message,
