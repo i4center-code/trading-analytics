@@ -11,7 +11,6 @@
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #121212, #1e1e1e);
@@ -21,7 +20,6 @@
       display: flex;
       flex-direction: column;
     }
-
     .header {
       background-color: #1e1e1e;
       color: white;
@@ -31,11 +29,9 @@
       align-items: center;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
-
     .logo {
       height: 50px;
     }
-
     .container {
       flex: 1;
       width: 100%;
@@ -43,12 +39,10 @@
       background: #2c2c2c;
       box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
     }
-
     .input-group {
       display: flex;
       margin-bottom: 20px;
     }
-
     #symbol-input {
       flex: 1;
       padding: 12px 15px;
@@ -59,12 +53,10 @@
       color: #e0e0e0;
       transition: border-color 0.3s ease;
     }
-
     #symbol-input:focus {
       border-color: #3498db;
       outline: none;
     }
-
     #analyze-btn {
       background: linear-gradient(135deg, #3498db, #2980b9);
       color: white;
@@ -77,12 +69,10 @@
       box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(52, 152, 219, 0.5);
       transition: transform 0.2s ease;
     }
-
     #analyze-btn:hover {
       transform: translateY(-2px);
       box-shadow: 3px 5px 8px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(52, 152, 219, 0.7);
     }
-
     .result-card {
       background: #333;
       border-radius: 10px;
@@ -90,7 +80,6 @@
       margin-top: 20px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
-
     .price {
       font-size: 12px; /* Font size adjusted */
       font-weight: bold;
@@ -98,12 +87,10 @@
       margin: 15px 0;
       color: #3498db;
     }
-
     .signal-container {
       text-align: center; /* Center the signal box horizontally */
       margin-top: 10px;
     }
-
     .signal-box {
       font-size: 12px; /* Font size adjusted */
       font-weight: bold;
@@ -114,22 +101,18 @@
       border: 2px solid transparent; /* Border added */
       background: transparent; /* Background removed */
     }
-
     .signal-box.buy {
       border-color: #27ae60;
       color: #27ae60;
     }
-
     .signal-box.sell {
       border-color: #e74c3c;
       color: #e74c3c;
     }
-
     .signal-box.neutral {
       border-color: #f1c40f;
       color: #f1c40f;
     }
-
     .indicator {
       margin: 10px 0;
       padding: 10px;
@@ -137,18 +120,15 @@
       border-radius: 5px;
       text-align: left;
     }
-
     .indicator p {
       font-size: 12px; /* Font size adjusted */
     }
-
     .bar-chart {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-top: 20px;
     }
-
     .bar-container {
       width: 100%;
       background: #444;
@@ -156,7 +136,6 @@
       overflow: hidden;
       box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
     }
-
     .bar {
       height: 30px;
       display: flex;
@@ -166,52 +145,42 @@
       color: white;
       transition: width 0.5s ease;
     }
-
     .buy-bar {
       background: linear-gradient(135deg, #27ae60, #2ecc71);
     }
-
     .sell-bar {
       background: linear-gradient(135deg, #e74c3c, #c0392b);
     }
-
     .resistance-support {
       margin-top: 15px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-
     .support-box, .resistance-box {
       padding: 15px;
       border-radius: 10px;
       box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
     }
-
     .support-box {
       border: 2px solid #27ae60;
       background: transparent;
     }
-
     .resistance-box {
       border: 2px solid #e74c3c;
       background: transparent;
     }
-
     .support-box p,
     .resistance-box p {
       font-size: 12px; /* Font size adjusted */
     }
-
     @media (max-width: 768px) {
       .input-group {
         flex-direction: column;
       }
-
       #symbol-input {
         margin-bottom: 10px;
       }
-
       #analyze-btn {
         width: 100%;
         margin-right: 0;
@@ -224,28 +193,26 @@
     <h1 style="font-size: 12px;">تحلیلگر ارز دیجیتال ایران افیکس</h1>
     <img src="https://app.puzzley.net/uploads/user/5VoB/app/iconiranfx.png" alt="لوگوی ایران افیکس" class="logo">
   </div>
-
   <div class="container">
     <div class="input-group">
       <input type="text" id="symbol-input" placeholder="مثلاً BTC, ETH, BNB" list="symbols-list">
       <datalist id="symbols-list"></datalist>
       <button id="analyze-btn">تحلیل کن</button>
     </div>
-    
+   
     <div id="analysis-result">
       <p style="text-align: center; color: #666; font-size: 12px;">ارز دیجیتال مورد نظر را انتخاب کنید</p>
     </div>
   </div>
-
   <script>
     async function loadSymbols() {
       try {
         const response = await fetch('/api/symbols');
         const symbols = await response.json();
-        
+       
         const datalist = document.getElementById('symbols-list');
         datalist.innerHTML = '';
-        
+       
         for (const [symbol, name] of Object.entries(symbols)) {
           const option = document.createElement('option');
           option.value = symbol;
@@ -256,40 +223,36 @@
         console.error('خطا در دریافت نمادها:', error);
       }
     }
-
     document.getElementById('analyze-btn').addEventListener('click', async () => {
       const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
-      
+     
       if (!symbol) {
         alert('لطفاً نماد ارز دیجیتال را وارد کنید');
         return;
       }
-
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="loading">
-          <p style="font-size: 12px;">در حال دریافت داده‌های ${symbol}  از سرور ایران افیکس...</p>
+          <p style="font-size: 12px;">در حال دریافت داده‌های ${symbol} از سرور ایران افیکس...</p>
         </div>
       `;
-      
+     
       try {
         const response = await fetch(`/api/analyze/${symbol}`);
         const data = await response.json();
-        
+       
         if (data.status === 'error') {
           throw new Error(data.message);
         }
-        
+       
         showResult(data);
       } catch (error) {
         showError(error);
       }
     });
-
-    function formatPrice(price) {
-      return price.toLocaleString('fa-IR') + ' ریال';
+    function formatPrice(data) {
+      return data.displayPrice; // استفاده مستقیم از displayPrice که شامل واحد درست (تومان) است
     }
-
     function determineSignal(buyPercentage, sellPercentage) {
       if (buyPercentage > 60) {
         return { text: 'سیگنال: پیشنهاد خرید', className: 'buy' };
@@ -299,18 +262,16 @@
         return { text: 'سیگنال: بازار خنثی هست، صبر کنید', className: 'neutral' };
       }
     }
-
     function showResult(data) {
       const buyPercentage = parseFloat(data.buyPercentage);
       const sellPercentage = parseFloat(data.sellPercentage);
       const signal = determineSignal(buyPercentage, sellPercentage);
-
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="result-card">
           <h2 style="text-align: center; font-size: 12px;">${data.name} (${data.symbol})</h2>
           <div class="price">
-            قیمت فعلی: ${formatPrice(data.lastPrice)}
+            قیمت فعلی: ${formatPrice(data)}
           </div>
           <div class="signal-container">
             <div class="signal-box ${signal.className}">
@@ -339,12 +300,12 @@
           </div>
           <div class="resistance-support">
             <div class="resistance-box">
-              <p>مقاومت ۱: ${data.resistance1}</p>
-              <p>مقاومت ۲: ${data.resistance2}</p>
+              <p>مقاومت ۱: ${data.displayResistance1}</p>
+              <p>مقاومت ۲: ${data.displayResistance2}</p>
             </div>
             <div class="support-box">
-              <p>حمایت ۱: ${data.support1}</p>
-              <p>حمایت ۲: ${data.support2}</p>
+              <p>حمایت ۱: ${data.displaySupport1}</p>
+              <p>حمایت ۲: ${data.displaySupport2}</p>
             </div>
           </div>
           <p style="text-align: center; color: #7f8c8d; font-size: 12px; margin-top: 15px;">
@@ -353,7 +314,6 @@
         </div>
       `;
     }
-
     function showError(error) {
       document.getElementById('analysis-result').innerHTML = `
         <div class="error">
@@ -364,7 +324,6 @@
         </div>
       `;
     }
-
     loadSymbols();
   </script>
 </body>
