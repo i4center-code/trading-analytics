@@ -48,7 +48,7 @@
       padding: 12px 15px;
       border: 2px solid #333;
       border-radius: 8px;
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
       background-color: #333;
       color: #e0e0e0;
       transition: border-color 0.3s ease;
@@ -65,7 +65,7 @@
       margin-right: 10px;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
       box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(52, 152, 219, 0.5);
       transition: transform 0.2s ease;
     }
@@ -81,25 +81,25 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
     .price {
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
       font-weight: bold;
       text-align: center;
       margin: 15px 0;
       color: #3498db;
     }
     .signal-container {
-      text-align: center; /* Center the signal box horizontally */
+      text-align: center;
       margin-top: 10px;
     }
     .signal-box {
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
       font-weight: bold;
-      display: inline-block; /* Make the box inline-block for centering */
+      display: inline-block;
       padding: 8px 15px;
       border-radius: 8px;
       box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
-      border: 2px solid transparent; /* Border added */
-      background: transparent; /* Background removed */
+      border: 2px solid transparent;
+      background: transparent;
     }
     .signal-box.buy {
       border-color: #27ae60;
@@ -121,7 +121,7 @@
       text-align: left;
     }
     .indicator p {
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
     }
     .bar-chart {
       display: flex;
@@ -141,7 +141,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
       color: white;
       transition: width 0.5s ease;
     }
@@ -172,7 +172,27 @@
     }
     .support-box p,
     .resistance-box p {
-      font-size: 12px; /* Font size adjusted */
+      font-size: 12px;
+    }
+    .error {
+      text-align: center;
+      color: #e74c3c;
+      margin-top: 20px;
+    }
+    .retry-btn {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+    }
+    .retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 3px 5px 8px rgba(0, 0, 0, 0.4);
     }
     @media (max-width: 768px) {
       .input-group {
@@ -199,20 +219,24 @@
       <datalist id="symbols-list"></datalist>
       <button id="analyze-btn">تحلیل کن</button>
     </div>
-   
     <div id="analysis-result">
       <p style="text-align: center; color: #666; font-size: 12px;">ارز دیجیتال مورد نظر را انتخاب کنید</p>
     </div>
   </div>
   <script>
     async function loadSymbols() {
+      const resultDiv = document.getElementById('analysis-result');
       try {
-        const response = await fetch('/api/symbols');
+        const response = await fetch('/api/symbols', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) {
+          throw new Error(`پاسخ سرور ناموفق: ${response.status} ${response.statusText}`);
+        }
         const symbols = await response.json();
-       
         const datalist = document.getElementById('symbols-list');
         datalist.innerHTML = '';
-       
         for (const [symbol, name] of Object.entries(symbols)) {
           const option = document.createElement('option');
           option.value = symbol;
@@ -221,11 +245,18 @@
         }
       } catch (error) {
         console.error('خطا در دریافت نمادها:', error);
+        resultDiv.innerHTML = `
+          <div class="error">
+            <p style="font-size: 12px;">خطا در بارگذاری لیست نمادها</p>
+            <p style="font-size: 12px;">${error.message}</p>
+            <p style="font-size: 12px;">لطفاً بعداً تلاش کنید</p>
+            <button class="retry-btn" onclick="loadSymbols()" style="font-size: 12px;">تلاش مجدد</button>
+          </div>
+        `;
       }
     }
     document.getElementById('analyze-btn').addEventListener('click', async () => {
       const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
-     
       if (!symbol) {
         alert('لطفاً نماد ارز دیجیتال را وارد کنید');
         return;
@@ -236,15 +267,15 @@
           <p style="font-size: 12px;">در حال دریافت داده‌های ${symbol} از سرور ایران افیکس...</p>
         </div>
       `;
-     
       try {
         const response = await fetch(`/api/analyze/${symbol}`);
+        if (!response.ok) {
+          throw new Error(`پاسخ سرور ناموفق: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
-       
         if (data.status === 'error') {
           throw new Error(data.message);
         }
-       
         showResult(data);
       } catch (error) {
         showError(error);
