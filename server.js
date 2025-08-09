@@ -108,17 +108,26 @@ const CRYPTO_SYMBOLS = {
   SNX: 'سینتتیکس'
 };
 
+// نمادهای خاص با پیشوند یا پسوند
+const SPECIAL_SYMBOLS = {
+  BTT: '1M_BTT',
+  FLOKI: '100K_FLOKI',
+  BABYDOGE: '1B_BABYDOGE',
+  PEPE: '1M_PEPE'
+};
+
 // تابع دریافت قیمت و حجم معاملات از API نوبیتکس
 async function getCryptoPrices(symbol, pair) {
   try {
-    const proxyUrl = 'https://corsproxy.io/?';
-    const baseApiUrl = `https://apiv2.nobitex.ir/v3/orderbook/${symbol}${pair}`;
-    const response = await axios.get(`${proxyUrl}${encodeURIComponent(baseApiUrl)}`, {
+    // مدیریت نمادهای خاص
+    const apiSymbol = SPECIAL_SYMBOLS[symbol] || symbol;
+    const baseApiUrl = `https://apiv2.nobitex.ir/v3/orderbook/${apiSymbol}${pair}`;
+    const response = await axios.get(baseApiUrl, {
       timeout: 30000, // 30 ثانیه
       headers: { 'User-Agent': 'TraderBot/IranFXCryptoAnalyst' }
     });
     if (!response.data || response.data.status !== 'ok') {
-      throw new Error(`داده دریافتی نامعتبر است برای ${symbol}${pair}`);
+      throw new Error(`داده دریافتی نامعتبر است برای ${apiSymbol}${pair}`);
     }
     const { asks, bids } = response.data;
     // محاسبه حجم کل خرید و فروش
@@ -244,6 +253,51 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
     });
   } catch (error) {
     console.error(`خطا در تحلیل ${symbol}${pair}:`, error.message, error.response ? error.response.data : '');
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+      details: error.response ? error.response.data : 'خطای ناشناخته'
+    });
+  }
+});
+
+// مسیر پیش‌فرض برای سازگاری با کلاینت‌های قدیمی
+app.get('/api/analyze/:symbol', async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    console.log(`درخواست تحلیل پیش‌فرض برای نماد: ${symbol}IRT`);
+    if (!CRYPTO_SYMBOLS[symbol]) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'این ارز دیجیتال پشتیبانی نمی‌شود'
+      });
+    }
+    const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, 'IRT');
+    const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
+    res.json({
+      status: 'success',
+      symbol,
+      pair: 'IRT',
+      name: CRYPTO_SYMBOLS[symbol],
+      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
+      unit: 'تومان',
+      indicators: {
+        rsi: analysis.rsi,
+        macd: analysis.macd,
+        stochastic: analysis.stochastic,
+        ema: analysis.ema,
+        sma: analysis.sma
+      },
+      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
+      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
+      support1: analysis.support1.toLocaleString('fa-IR'),
+      support2: analysis.support2.toLocaleString('fa-IR'),
+      buyPercentage: analysis.buyPercentage.toFixed(2),
+      sellPercentage: analysis.sellPercentage.toFixed(2),
+      lastUpdate: new Date()
+    });
+  } catch (error) {
+    console.error(`خطا در تحلیل پیش‌فرض ${symbol}IRT:`, error.message, error.response ? error.response.data : '');
     res.status(500).json({
       status: 'error',
       message: error.message,
