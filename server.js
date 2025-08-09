@@ -115,7 +115,7 @@ SNX: 'سینتتیکس'
 // تابع دریافت قیمت و حجم معاملات از API نوبیتکس
 async function getCryptoPrices(symbol) {
   try {
-    const response = await axios.get(`https://api.nobitex.ir/v3/orderbook/${symbol}IRT`, {
+    const response = await axios.get(`https://apiv2.nobitex.ir/v3/orderbook/${symbol}IRT`, {
       timeout: 15000 // 15 ثانیه
     });
 
@@ -265,3 +265,4 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
