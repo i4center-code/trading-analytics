@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trading Analytics</title>
-  <style>
+<p>&nbsp;</p>
+<style>
     /* Reset Styles */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #121212, #1e1e1e);
@@ -21,6 +17,7 @@
       flex-direction: column;
       overflow-x: hidden; /* جلوگیری از اسکرول افقی */
     }
+
     .iframe-container {
       flex: 1;
       width: 100%;
@@ -28,6 +25,7 @@
       overflow-y: auto; /* فعال کردن اسکرول عمودی */
       -webkit-overflow-scrolling: touch; /* اسکرول روان برای موبایل */
     }
+
     iframe {
       width: 100%;
       height: 110%; /* ارتفاع دقیق صفحه */
@@ -36,48 +34,4 @@
       pointer-events: auto; /* فعال کردن تاچ */
     }
   </style>
-</head>
-<body>
-  <div class="iframe-container">
-    <iframe id="tradingIframe" src="https://trading-analytics-git-main-iranfxs-projects.vercel.app/" allowtransparency="true"></iframe>
-  </div>
-  <script>
-    // تابع برای رهگیری درخواست‌های API
-    (function() {
-      const originalFetch = window.fetch;
-      window.fetch = async function(url, options) {
-        const response = await originalFetch(url, options);
-        // کپی از پاسخ برای دستکاری
-        const clonedResponse = response.clone();
-        try {
-          // فقط پاسخ‌های JSON از API خودمون رو فیلتر می‌کنیم
-          if (url.includes('/api/analyze/')) {
-            const data = await clonedResponse.json();
-            // جایگزین کردن "ریال" با "" در رشته‌های قیمت
-            const replaceRial = (str) => typeof str === 'string' ? str.replace('ریال', '') : str;
-            if (data.lastPrice) data.lastPrice = replaceRial(data.lastPrice);
-            if (data.displayPrice) data.displayPrice = replaceRial(data.displayPrice);
-            if (data.resistance1) data.resistance1 = replaceRial(data.resistance1);
-            if (data.displayResistance1) data.displayResistance1 = replaceRial(data.displayResistance1);
-            if (data.resistance2) data.resistance2 = replaceRial(data.resistance2);
-            if (data.displayResistance2) data.displayResistance2 = replaceRial(data.displayResistance2);
-            if (data.support1) data.support1 = replaceRial(data.support1);
-            if (data.displaySupport1) data.displaySupport1 = replaceRial(data.displaySupport1);
-            if (data.support2) data.support2 = replaceRial(data.support2);
-            if (data.displaySupport2) data.displaySupport2 = replaceRial(data.displaySupport2);
-            // بازگرداندن پاسخ دستکاری‌شده
-            return new Response(JSON.stringify(data), {
-              status: response.status,
-              statusText: response.statusText,
-              headers: response.headers
-            });
-          }
-        } catch (error) {
-          console.error('خطا در فیلتر کردن پاسخ API:', error);
-        }
-        return response; // برای درخواست‌های غیرمرتبط، پاسخ اصلی رو برگردون
-      };
-    })();
-  </script>
-</body>
-</html>
+<div class="iframe-container"><iframe src="https://trading-analytics-git-main-iranfxs-projects.vercel.app/" allowtransparency="true"></iframe></div>
