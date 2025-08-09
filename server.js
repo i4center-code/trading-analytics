@@ -242,11 +242,11 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
       symbol,
       pair,
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'), // برای سازگاری با کلاینت‌های قدیمی
+      lastPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`, // شامل واحد برای جلوگیری از اضافه شدن "ریال"
       displayPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
       unit,
       currencyLabel: unit,
-      warning: pair === 'IRT' ? 'لطفاً از displayPrice استفاده کنید، نه lastPrice، تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.' : 'لطفاً از displayPrice استفاده کنید.',
+      warning: pair === 'IRT' ? 'لطفاً از displayPrice یا lastPrice استفاده کنید تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.' : 'لطفاً از displayPrice یا lastPrice استفاده کنید.',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -254,13 +254,13 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
-      resistance1: analysis.resistance1.toLocaleString('fa-IR'), // برای سازگاری
+      resistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
-      resistance2: analysis.resistance2.toLocaleString('fa-IR'), // برای سازگاری
+      resistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displayResistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
-      support1: analysis.support1.toLocaleString('fa-IR'), // برای سازگاری
+      support1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displaySupport1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
-      support2: analysis.support2.toLocaleString('fa-IR'), // برای سازگاری
+      support2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displaySupport2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
@@ -295,11 +295,11 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       symbol,
       pair: 'IRT',
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'), // برای سازگاری
+      lastPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displayPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
       unit,
       currencyLabel: unit,
-      warning: 'لطفاً از displayPrice استفاده کنید، نه lastPrice، تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.',
+      warning: 'لطفاً از displayPrice یا lastPrice استفاده کنید تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -307,13 +307,13 @@ app.get('/api/analyze/:symbol', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
-      resistance1: analysis.resistance1.toLocaleString('fa-IR'), // برای سازگاری
+      resistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
-      resistance2: analysis.resistance2.toLocaleString('fa-IR'), // برای سازگاری
+      resistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displayResistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
-      support1: analysis.support1.toLocaleString('fa-IR'), // برای سازگاری
+      support1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displaySupport1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
-      support2: analysis.support2.toLocaleString('fa-IR'), // برای سازگاری
+      support2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
       displaySupport2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
