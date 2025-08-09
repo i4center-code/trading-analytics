@@ -80,7 +80,7 @@ const CRYPTO_SYMBOLS = {
   FLOW: 'فلو',
   W: 'دبلیو',
   CVC: 'سیویک',
-  NMR: 'نومیرای',
+  NMR: 'نومرایر',
   SKL: 'اسکیل نتورک',
   SNT: 'استاتوس',
   BAT: 'بیسیک اتنشن توکن',
@@ -111,12 +111,14 @@ const CRYPTO_SYMBOLS = {
 // تابع دریافت قیمت و حجم معاملات از API نوبیتکس
 async function getCryptoPrices(symbol, pair) {
   try {
-    const response = await axios.get(`https://apiv2.nobitex.ir/v3/orderbook/${symbol}${pair}`, {
+    const proxyUrl = 'https://corsproxy.io/?';
+    const baseApiUrl = `https://apiv2.nobitex.ir/v3/orderbook/${symbol}${pair}`;
+    const response = await axios.get(`${proxyUrl}${encodeURIComponent(baseApiUrl)}`, {
       timeout: 30000, // 30 ثانیه
       headers: { 'User-Agent': 'TraderBot/IranFXCryptoAnalyst' }
     });
     if (!response.data || response.data.status !== 'ok') {
-      throw new Error('داده دریافتی نامعتبر است');
+      throw new Error(`داده دریافتی نامعتبر است برای ${symbol}${pair}`);
     }
     const { asks, bids } = response.data;
     // محاسبه حجم کل خرید و فروش
@@ -132,7 +134,7 @@ async function getCryptoPrices(symbol, pair) {
     };
   } catch (error) {
     console.error(`خطا در دریافت قیمت برای ${symbol}${pair}:`, error.message, error.response ? error.response.data : '');
-    throw new Error('عدم اتصال به سرور قیمت‌گذاری');
+    throw new Error(`عدم اتصال به سرور قیمت‌گذاری برای ${symbol}${pair}`);
   }
 }
 
