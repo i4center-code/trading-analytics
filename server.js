@@ -122,6 +122,7 @@ async function getCryptoPrices(symbol, pair) {
     // مدیریت نمادهای خاص
     const apiSymbol = SPECIAL_SYMBOLS[symbol] || symbol;
     const baseApiUrl = `https://apiv2.nobitex.ir/v3/orderbook/${apiSymbol}${pair}`;
+    console.log(`درخواست به API نوبیتکس: ${baseApiUrl}`);
     const response = await axios.get(baseApiUrl, {
       timeout: 30000, // 30 ثانیه
       headers: { 'User-Agent': 'TraderBot/IranFXCryptoAnalyst' }
@@ -235,7 +236,7 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
       pair,
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
-      unit: pair === 'IRT' ? 'تومان' : 'USDT',
+      unit: pair === 'IRT' ? 'تومان' : 'دلار',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
