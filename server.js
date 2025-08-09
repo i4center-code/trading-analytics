@@ -123,7 +123,6 @@ const CACHE_DURATION = 60 * 1000; // 60 ثانیه
 // تابع دریافت قیمت تتر (USDT/IRT)
 async function getTetherPrice() {
   const now = Date.now();
-  // چک کردن کش
   if (tetherPriceCache.price && tetherPriceCache.timestamp && (now - tetherPriceCache.timestamp) < CACHE_DURATION) {
     console.log('استفاده از قیمت تتر از کش:', tetherPriceCache.price);
     return tetherPriceCache.price;
@@ -210,6 +209,11 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
     values: prices,
     period: 14
   }).slice(-1)[0] || 0;
+  const bollingerBands = technicalindicators.bollingerbands({
+    values: prices,
+    period: 20,
+    stdDev: 2
+  }).slice(-1)[0] || { upper: lastPrice * 1.02, middle: lastPrice, lower: lastPrice * 0.98 };
   const resistance1 = Math.max(...prices) * 1.01;
   const resistance2 = Math.max(...prices) * 1.02;
   const support1 = Math.min(...prices) * 0.99;
@@ -224,6 +228,7 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
     stochastic,
     ema,
     sma,
+    bollingerBands,
     resistance1,
     resistance2,
     support1,
@@ -289,7 +294,12 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
         macd: analysis.macd,
         stochastic: analysis.stochastic,
         ema: analysis.ema,
-        sma: analysis.sma
+        sma: analysis.sma,
+        bollingerBands: {
+          upper: analysis.bollingerBands.upper.toLocaleString('fa-IR'),
+          middle: analysis.bollingerBands.middle.toLocaleString('fa-IR'),
+          lower: analysis.bollingerBands.lower.toLocaleString('fa-IR')
+        }
       },
       resistance1: analysis.resistance1.toLocaleString('fa-IR'),
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
@@ -353,7 +363,12 @@ app.get('/api/analyze/:symbol', async (req, res) => {
         macd: analysis.macd,
         stochastic: analysis.stochastic,
         ema: analysis.ema,
-        sma: analysis.sma
+        sma: analysis.sma,
+        bollingerBands: {
+          upper: analysis.bollingerBands.upper.toLocaleString('fa-IR'),
+          middle: analysis.bollingerBands.middle.toLocaleString('fa-IR'),
+          lower: analysis.bollingerBands.lower.toLocaleString('fa-IR')
+        }
       },
       resistance1: analysis.resistance1.toLocaleString('fa-IR'),
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
