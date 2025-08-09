@@ -116,27 +116,6 @@ const SPECIAL_SYMBOLS = {
   PEPE: '1M_PEPE'
 };
 
-// تابع دریافت قیمت تتر (USDTIRT)
-async function getTetherPrice() {
-  try {
-    const response = await axios.get('https://apiv2.nobitex.ir/v3/orderbook/USDTIRT', {
-      timeout: 30000,
-      headers: { 'User-Agent': 'TraderBot/IranFXCryptoAnalyst' }
-    });
-    if (!response.data || response.data.status !== 'ok') {
-      throw new Error('داده دریافتی برای تتر نامعتبر است');
-    }
-    const { bids } = response.data;
-    // قیمت آخرین پیشنهاد خرید تتر (به ریال، تقسیم بر 10 برای تومان)
-    const tetherPrice = parseFloat(bids[0][0]) / 10;
-    return tetherPrice;
-  } catch (error) {
-    console.error('خطا در دریافت قیمت تتر:', error.message, error.response ? error.response.data : '');
-    // قیمت پیش‌فرض تتر در صورت خطا (60000 تومان)
-    return 60000;
-  }
-}
-
 // تابع دریافت قیمت و حجم معاملات از API نوبیتکس
 async function getCryptoPrices(symbol, pair) {
   try {
@@ -250,21 +229,6 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
     }
     const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, pair);
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
-    // دریافت قیمت تتر برای تبدیل به دلار (فقط برای IRT)
-    const tetherPrice = pair === 'IRT' ? await getTetherPrice() : 1;
-    const dollarPrices = pair === 'IRT' ? {
-      lastPrice: (analysis.lastPrice / tetherPrice).toFixed(2),
-      resistance1: (analysis.resistance1 / tetherPrice).toFixed(2),
-      resistance2: (analysis.resistance2 / tetherPrice).toFixed(2),
-      support1: (analysis.support1 / tetherPrice).toFixed(2),
-      support2: (analysis.support2 / tetherPrice).toFixed(2)
-    } : {
-      lastPrice: analysis.lastPrice.toFixed(2),
-      resistance1: analysis.resistance1.toFixed(2),
-      resistance2: analysis.resistance2.toFixed(2),
-      support1: analysis.support1.toFixed(2),
-      support2: analysis.support2.toFixed(2)
-    };
     res.json({
       status: 'success',
       symbol,
@@ -272,7 +236,6 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       unit: pair === 'IRT' ? 'تومان' : 'دلار',
-      dollarPrices,
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -318,13 +281,6 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       unit: 'دلار',
-      dollarPrices: {
-        lastPrice: analysis.lastPrice.toFixed(2),
-        resistance1: analysis.resistance1.toFixed(2),
-        resistance2: analysis.resistance2.toFixed(2),
-        support1: analysis.support1.toFixed(2),
-        support2: analysis.support2.toFixed(2)
-      },
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
