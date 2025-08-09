@@ -87,6 +87,13 @@
       margin: 15px 0;
       color: #3498db;
     }
+    .dollar-price {
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      margin: 5px 0;
+      color: #2ecc71;
+    }
     .signal-container {
       text-align: center;
       margin-top: 10px;
@@ -173,6 +180,9 @@
     .support-box p,
     .resistance-box p {
       font-size: 12px;
+    }
+    .dollar-text {
+      color: #2ecc71;
     }
     .error {
       text-align: center;
@@ -282,7 +292,7 @@
       }
     });
     function formatPrice(data) {
-      return data.displayPrice; // استفاده مستقیم از displayPrice که شامل واحد درست (تومان) است
+      return data.displayPrice;
     }
     function determineSignal(buyPercentage, sellPercentage) {
       if (buyPercentage > 60) {
@@ -303,6 +313,9 @@
           <h2 style="text-align: center; font-size: 12px;">${data.name} (${data.symbol})</h2>
           <div class="price">
             قیمت فعلی: ${formatPrice(data)}
+          </div>
+          <div class="dollar-price">
+            قیمت فعلی (دلار): ${data.dollarPrice}
           </div>
           <div class="signal-container">
             <div class="signal-box ${signal.className}">
@@ -332,11 +345,15 @@
           <div class="resistance-support">
             <div class="resistance-box">
               <p>مقاومت ۱: ${data.displayResistance1}</p>
+              <p class="dollar-text">مقاومت ۱ (دلار): ${data.dollarResistance1}</p>
               <p>مقاومت ۲: ${data.displayResistance2}</p>
+              <p class="dollar-text">مقاومت ۲ (دلار): ${data.dollarResistance2}</p>
             </div>
             <div class="support-box">
               <p>حمایت ۱: ${data.displaySupport1}</p>
+              <p class="dollar-text">حمایت ۱ (دلار): ${data.dollarSupport1}</p>
               <p>حمایت ۲: ${data.displaySupport2}</p>
+              <p class="dollar-text">حمایت ۲ (دلار): ${data.dollarSupport2}</p>
             </div>
           </div>
           <p style="text-align: center; color: #7f8c8d; font-size: 12px; margin-top: 15px;">
