@@ -230,14 +230,15 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
     }
     const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, pair);
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
+    const unit = pair === 'IRT' ? 'تومان' : 'دلار';
     res.json({
       status: 'success',
       symbol,
       pair,
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
-      unit: pair === 'IRT' ? 'تومان' : 'دلار',
-      currencyLabel: pair === 'IRT' ? 'تومان' : 'دلار',
+      lastPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
+      unit,
+      currencyLabel: unit,
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -245,10 +246,10 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
-      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
-      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
-      support1: analysis.support1.toLocaleString('fa-IR'),
-      support2: analysis.support2.toLocaleString('fa-IR'),
+      resistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
+      resistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
+      support1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
+      support2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
       lastUpdate: new Date()
@@ -276,14 +277,15 @@ app.get('/api/analyze/:symbol', async (req, res) => {
     }
     const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, 'IRT');
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
+    const unit = 'تومان';
     res.json({
       status: 'success',
       symbol,
       pair: 'IRT',
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
-      unit: 'تومان',
-      currencyLabel: 'تومان',
+      lastPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
+      unit,
+      currencyLabel: unit,
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -291,10 +293,10 @@ app.get('/api/analyze/:symbol', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
-      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
-      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
-      support1: analysis.support1.toLocaleString('fa-IR'),
-      support2: analysis.support2.toLocaleString('fa-IR'),
+      resistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
+      resistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
+      support1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
+      support2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
       lastUpdate: new Date()
