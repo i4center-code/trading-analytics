@@ -237,6 +237,7 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       unit: pair === 'IRT' ? 'تومان' : 'دلار',
+      currencyLabel: pair === 'IRT' ? 'تومان' : 'دلار',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -282,6 +283,7 @@ app.get('/api/analyze/:symbol', async (req, res) => {
       name: CRYPTO_SYMBOLS[symbol],
       lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       unit: 'تومان',
+      currencyLabel: 'تومان',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
