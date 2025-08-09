@@ -120,6 +120,16 @@
       border-color: #f1c40f;
       color: #f1c40f;
     }
+    .signal-box.strong-buy {
+      border-color: #1b5e20;
+      color: #1b5e20;
+      background: rgba(27, 94, 32, 0.1);
+    }
+    .signal-box.strong-sell {
+      border-color: #b71c1c;
+      color: #b71c1c;
+      background: rgba(183, 28, 28, 0.1);
+    }
     .indicator {
       margin: 10px 0;
       padding: 10px;
@@ -294,10 +304,50 @@
     function formatPrice(data) {
       return data.displayPrice;
     }
-    function determineSignal(buyPercentage, sellPercentage) {
-      if (buyPercentage > 60) {
+    function determineSignal(data) {
+      const buyScore = [];
+      const sellScore = [];
+      const { rsi, macd, stochastic, ema, sma, bollingerBands, buyPercentage, sellPercentage } = data.indicators;
+      const lastPrice = parseFloat(data.lastPrice.replace(/,/g, ''));
+
+      // RSI: اشباع فروش (خرید) یا اشباع خرید (فروش)
+      if (rsi < 30) buyScore.push({ indicator: 'RSI', value: rsi, weight: 0.3 });
+      if (rsi > 70) sellScore.push({ indicator: 'RSI', value: rsi, weight: 0.3 });
+
+      // MACD: تقاطع صعودی (خرید) یا نزولی (فروش)
+      if (macd.MACD > macd.signal && macd.MACD > 0) buyScore.push({ indicator: 'MACD', value: macd.MACD, weight: 0.4 });
+      if (macd.MACD < macd.signal && macd.MACD < 0) sellScore.push({ indicator: 'MACD', value: macd.MACD, weight: 0.4 });
+
+      // Stochastic: اشباع فروش (خرید) یا اشباع خرید (فروش)
+      if (stochastic.k < 20 && stochastic.d < 20) buyScore.push({ indicator: 'Stochastic', value: stochastic.k, weight: 0.2 });
+      if (stochastic.k > 80 && stochastic.d > 80) sellScore.push({ indicator: 'Stochastic', value: stochastic.k, weight: 0.2 });
+
+      // EMA/SMA: روند صعودی (خرید) یا نزولی (فروش)
+      if (ema > sma) buyScore.push({ indicator: 'EMA/SMA', value: ema - sma, weight: 0.2 });
+      if (ema < sma) sellScore.push({ indicator: 'EMA/SMA', value: sma - ema, weight: 0.2 });
+
+      // Bollinger Bands: قیمت نزدیک باند پایینی (خرید) یا بالایی (فروش)
+      const bbUpper = parseFloat(bollingerBands.upper.replace(/,/g, ''));
+      const bbLower = parseFloat(bollingerBands.lower.replace(/,/g, ''));
+      if (lastPrice <= bbLower) buyScore.push({ indicator: 'Bollinger Bands', value: lastPrice - bbLower, weight: 0.3 });
+      if (lastPrice >= bbUpper) sellScore.push({ indicator: 'Bollinger Bands', value: bbUpper - lastPrice, weight: 0.3 });
+
+      // حجم معاملات
+      if (buyPercentage > 60) buyScore.push({ indicator: 'Volume', value: buyPercentage, weight: 0.3 });
+      if (sellPercentage > 60) sellScore.push({ indicator: 'Volume', value: sellPercentage, weight: 0.3 });
+
+      // محاسبه امتیاز کل
+      const totalBuyScore = buyScore.reduce((sum, item) => sum + item.weight, 0);
+      const totalSellScore = sellScore.reduce((sum, item) => sum + item.weight, 0);
+
+      // تعیین سیگنال
+      if (totalBuyScore >= 0.8 && buyScore.length >= 3) {
+        return { text: 'سیگنال: خرید قوی', className: 'strong-buy' };
+      } else if (totalBuyScore >= 0.5 && buyScore.length >= 2) {
         return { text: 'سیگنال: پیشنهاد خرید', className: 'buy' };
-      } else if (sellPercentage > 60) {
+      } else if (totalSellScore >= 0.8 && sellScore.length >= 3) {
+        return { text: 'سیگنال: فروش قوی', className: 'strong-sell' };
+      } else if (totalSellScore >= 0.5 && sellScore.length >= 2) {
         return { text: 'سیگنال: پیشنهاد فروش', className: 'sell' };
       } else {
         return { text: 'سیگنال: بازار خنثی هست، صبر کنید', className: 'neutral' };
@@ -306,7 +356,7 @@
     function showResult(data) {
       const buyPercentage = parseFloat(data.buyPercentage);
       const sellPercentage = parseFloat(data.sellPercentage);
-      const signal = determineSignal(buyPercentage, sellPercentage);
+      const signal = determineSignal(data);
       const resultDiv = document.getElementById('analysis-result');
       resultDiv.innerHTML = `
         <div class="result-card">
@@ -329,6 +379,7 @@
             <p><strong>Stochastic (K/D):</strong> ${data.indicators.stochastic.k.toFixed(2)} / ${data.indicators.stochastic.d.toFixed(2)}</p>
             <p><strong>EMA:</strong> ${data.indicators.ema.toFixed(2)}</p>
             <p><strong>SMA:</strong> ${data.indicators.sma.toFixed(2)}</p>
+            <p><strong>Bollinger Bands:</strong> Upper: ${data.indicators.bollingerBands.upper} | Middle: ${data.indicators.bollingerBands.middle} | Lower: ${data.indicators.bollingerBands.lower}</p>
           </div>
           <div class="bar-chart">
             <div class="bar-container">
