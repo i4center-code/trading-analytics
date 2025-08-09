@@ -116,25 +116,53 @@ const SPECIAL_SYMBOLS = {
   PEPE: '1M_PEPE'
 };
 
+// کش برای قیمت تتر
+let tetherPriceCache = { price: null, timestamp: null };
+const CACHE_DURATION = 60 * 1000; // 60 ثانیه
+
+// تابع دریافت قیمت تتر (USDT/IRT)
+async function getTetherPrice() {
+  const now = Date.now();
+  // چک کردن کش
+  if (tetherPriceCache.price && tetherPriceCache.timestamp && (now - tetherPriceCache.timestamp) < CACHE_DURATION) {
+    console.log('استفاده از قیمت تتر از کش:', tetherPriceCache.price);
+    return tetherPriceCache.price;
+  }
+  try {
+    const response = await axios.get('https://apiv2.nobitex.ir/v3/orderbook/USDTIRT', {
+      timeout: 30000,
+      headers: { 'User-Agent': 'TraderBot/IranFXCryptoAnalyst' }
+    });
+    if (!response.data || response.data.status !== 'ok') {
+      throw new Error('داده دریافتی قیمت تتر نامعتبر است');
+    }
+    const { bids } = response.data;
+    const tetherPrice = parseFloat(bids[0][0]) / 10; // تبدیل به تومان
+    tetherPriceCache = { price: tetherPrice, timestamp: now };
+    console.log('قیمت تتر به‌روزرسانی شد:', tetherPrice);
+    return tetherPrice;
+  } catch (error) {
+    console.error('خطا در دریافت قیمت تتر:', error.message);
+    throw new Error('عدم اتصال به سرور قیمت‌گذاری برای تتر');
+  }
+}
+
 // تابع دریافت قیمت و حجم معاملات از API نوبیتکس
 async function getCryptoPrices(symbol, pair) {
   try {
-    // مدیریت نمادهای خاص
     const apiSymbol = SPECIAL_SYMBOLS[symbol] || symbol;
     const baseApiUrl = `https://apiv2.nobitex.ir/v3/orderbook/${apiSymbol}${pair}`;
     console.log(`درخواست به API نوبیتکس: ${baseApiUrl}`);
     const response = await axios.get(baseApiUrl, {
-      timeout: 30000, // 30 ثانیه
+      timeout: 30000,
       headers: { 'User-Agent': 'TraderBot/IranFXCryptoAnalyst' }
     });
     if (!response.data || response.data.status !== 'ok') {
       throw new Error(`داده دریافتی نامعتبر است برای ${apiSymbol}${pair}`);
     }
     const { asks, bids } = response.data;
-    // محاسبه حجم کل خرید و فروش
     const totalBuyVolume = bids.reduce((sum, bid) => sum + parseFloat(bid[1]), 0);
     const totalSellVolume = asks.reduce((sum, ask) => sum + parseFloat(ask[1]), 0);
-    // تبدیل قیمت‌ها برای جفت‌های IRT (به تومان)
     const isIRT = pair === 'IRT';
     const prices = [...asks, ...bids].map(item => parseFloat(item[0]) / (isIRT ? 10 : 1));
     return {
@@ -157,19 +185,16 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
   if (typeof lastPrice !== 'number' || isNaN(lastPrice)) {
     throw new Error('قیمت نهایی نامعتبر است');
   }
-  // محاسبه RSI
   const rsi = technicalindicators.rsi({
     values: prices,
     period: 14
   }).slice(-1)[0] || 50;
-  // محاسبه MACD
   const macdResult = technicalindicators.macd({
     values: prices,
     fastPeriod: 12,
     slowPeriod: 26,
     signalPeriod: 9
   }).slice(-1)[0] || { MACD: 0, signal: 0 };
-  // محاسبه Stochastic
   const stochastic = technicalindicators.stochastic({
     high: prices.map(() => Math.max(...prices)),
     low: prices.map(() => Math.min(...prices)),
@@ -177,22 +202,18 @@ function calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume) {
     period: 14,
     signalPeriod: 3
   }).slice(-1)[0] || { k: 50, d: 50 };
-  // محاسبه EMA
   const ema = technicalindicators.ema({
     values: prices,
     period: 14
   }).slice(-1)[0] || 0;
-  // محاسبه SMA
   const sma = technicalindicators.sma({
     values: prices,
     period: 14
   }).slice(-1)[0] || 0;
-  // محاسبه سطوح مقاومت و حمایت
   const resistance1 = Math.max(...prices) * 1.01;
   const resistance2 = Math.max(...prices) * 1.02;
   const support1 = Math.min(...prices) * 0.99;
   const support2 = Math.min(...prices) * 0.98;
-  // محاسبه درصد خریدار و فروشنده
   const totalVolume = totalBuyVolume + totalSellVolume;
   const buyPercentage = (totalBuyVolume / totalVolume) * 100 || 0;
   const sellPercentage = (totalSellVolume / totalVolume) * 100 || 0;
@@ -237,16 +258,32 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
     const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, pair);
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
     const unit = pair === 'IRT' ? 'تومان' : 'دلار';
+    let dollarPrice, dollarResistance1, dollarResistance2, dollarSupport1, dollarSupport2;
+    if (pair === 'IRT') {
+      const tetherPrice = await getTetherPrice();
+      dollarPrice = analysis.lastPrice / tetherPrice;
+      dollarResistance1 = analysis.resistance1 / tetherPrice;
+      dollarResistance2 = analysis.resistance2 / tetherPrice;
+      dollarSupport1 = analysis.support1 / tetherPrice;
+      dollarSupport2 = analysis.support2 / tetherPrice;
+    } else {
+      dollarPrice = analysis.lastPrice;
+      dollarResistance1 = analysis.resistance1;
+      dollarResistance2 = analysis.resistance2;
+      dollarSupport1 = analysis.support1;
+      dollarSupport2 = analysis.support2;
+    }
     res.json({
       status: 'success',
       symbol,
       pair,
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`, // شامل واحد برای جلوگیری از اضافه شدن "ریال"
+      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       displayPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
+      dollarPrice: dollarPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
       unit,
       currencyLabel: unit,
-      warning: pair === 'IRT' ? 'لطفاً از displayPrice یا lastPrice استفاده کنید تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.' : 'لطفاً از displayPrice یا lastPrice استفاده کنید.',
+      warning: pair === 'IRT' ? 'لطفاً از displayPrice استفاده کنید تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.' : 'لطفاً از displayPrice استفاده کنید.',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -254,14 +291,18 @@ app.get('/api/analyze/:symbol/:pair', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
-      resistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
-      resistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      dollarResistance1: dollarResistance1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
+      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
       displayResistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
-      support1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      dollarResistance2: dollarResistance2.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
+      support1: analysis.support1.toLocaleString('fa-IR'),
       displaySupport1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
-      support2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      dollarSupport1: dollarSupport1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
+      support2: analysis.support2.toLocaleString('fa-IR'),
       displaySupport2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
+      dollarSupport2: dollarSupport2.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
       lastUpdate: new Date()
@@ -290,16 +331,23 @@ app.get('/api/analyze/:symbol', async (req, res) => {
     const { prices, totalBuyVolume, totalSellVolume } = await getCryptoPrices(symbol, 'IRT');
     const analysis = calculateTechnicalAnalysis(prices, totalBuyVolume, totalSellVolume);
     const unit = 'تومان';
+    const tetherPrice = await getTetherPrice();
+    const dollarPrice = analysis.lastPrice / tetherPrice;
+    const dollarResistance1 = analysis.resistance1 / tetherPrice;
+    const dollarResistance2 = analysis.resistance2 / tetherPrice;
+    const dollarSupport1 = analysis.support1 / tetherPrice;
+    const dollarSupport2 = analysis.support2 / tetherPrice;
     res.json({
       status: 'success',
       symbol,
       pair: 'IRT',
       name: CRYPTO_SYMBOLS[symbol],
-      lastPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      lastPrice: analysis.lastPrice.toLocaleString('fa-IR'),
       displayPrice: `${analysis.lastPrice.toLocaleString('fa-IR')} ${unit}`,
+      dollarPrice: dollarPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
       unit,
       currencyLabel: unit,
-      warning: 'لطفاً از displayPrice یا lastPrice استفاده کنید تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.',
+      warning: 'لطفاً از displayPrice استفاده کنید تا واحد به درستی "تومان" نمایش داده شود و از افزودن "ریال" خودداری کنید.',
       indicators: {
         rsi: analysis.rsi,
         macd: analysis.macd,
@@ -307,14 +355,18 @@ app.get('/api/analyze/:symbol', async (req, res) => {
         ema: analysis.ema,
         sma: analysis.sma
       },
-      resistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      resistance1: analysis.resistance1.toLocaleString('fa-IR'),
       displayResistance1: `${analysis.resistance1.toLocaleString('fa-IR')} ${unit}`,
-      resistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      dollarResistance1: dollarResistance1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
+      resistance2: analysis.resistance2.toLocaleString('fa-IR'),
       displayResistance2: `${analysis.resistance2.toLocaleString('fa-IR')} ${unit}`,
-      support1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      dollarResistance2: dollarResistance2.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
+      support1: analysis.support1.toLocaleString('fa-IR'),
       displaySupport1: `${analysis.support1.toLocaleString('fa-IR')} ${unit}`,
-      support2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`, // شامل واحد
+      dollarSupport1: dollarSupport1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
+      support2: analysis.support2.toLocaleString('fa-IR'),
       displaySupport2: `${analysis.support2.toLocaleString('fa-IR')} ${unit}`,
+      dollarSupport2: dollarSupport2.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' دلار',
       buyPercentage: analysis.buyPercentage.toFixed(2),
       sellPercentage: analysis.sellPercentage.toFixed(2),
       lastUpdate: new Date()
